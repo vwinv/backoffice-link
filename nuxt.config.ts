@@ -15,6 +15,9 @@ export default defineNuxtConfig({
         },
       ],
       link: [
+        { rel: 'icon', type: 'image/png', href: '/images/icone.png' },
+        { rel: 'shortcut icon', type: 'image/png', href: '/images/icone.png' },
+        { rel: 'apple-touch-icon', href: '/images/icone.png' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         {
           rel: 'preconnect',
@@ -30,8 +33,8 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiBaseUrl:
-        process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/v1',
+      // Surchargé automatiquement par NUXT_PUBLIC_API_BASE_URL
+      apiBaseUrl: 'http://localhost:3000/api/v1',
     },
   },
 })

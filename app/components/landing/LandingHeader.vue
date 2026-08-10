@@ -17,7 +17,7 @@ function close() {
   <header class="header">
     <div class="container bar">
       <a href="#accueil" class="brand" @click="close">
-        <img src="/images/logo.png" alt="DropOne" width="132" height="36" />
+        <img src="/images/logo.png" alt="DropOne" width="200" height="54" />
       </a>
 
       <nav class="nav desktop" aria-label="Navigation principale">
@@ -73,12 +73,12 @@ function close() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 76px;
+  min-height: 88px;
   gap: 20px;
 }
 
 .brand img {
-  height: 34px;
+  height: 52px;
   width: auto;
 }
 

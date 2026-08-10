@@ -56,6 +56,7 @@ const socials = [
           <a v-for="link in links" :key="link.href" :href="link.href">
             {{ link.label }}
           </a>
+          <NuxtLink to="/policy">Confidentialité</NuxtLink>
         </nav>
 
         <a class="btn btn-primary download" href="#telecharger">
