@@ -58,6 +58,17 @@ export function useAuth() {
     user.value = null
   }
 
+  function assertBackofficeAccess(nextUser: AdminUser) {
+    const canAccess =
+      Boolean(nextUser.adminRole) ||
+      nextUser.role === 'ADMIN' ||
+      (nextUser.permissions ?? []).includes('*')
+    if (!canAccess) {
+      clearSession()
+      throw new Error('Accès réservé aux utilisateurs du backoffice')
+    }
+  }
+
   async function login(email: string, password: string) {
     loading.value = true
     try {
@@ -65,14 +76,24 @@ export function useAuth() {
         method: 'POST',
         body: { email, password },
       })
-      const canAccess =
-        Boolean(response.user.adminRole) ||
-        response.user.role === 'ADMIN' ||
-        (response.user.permissions ?? []).includes('*')
-      if (!canAccess) {
-        clearSession()
-        throw new Error('Accès réservé aux utilisateurs du backoffice')
-      }
+      assertBackofficeAccess(response.user)
+      setSession(response.accessToken, response.user)
+      return response.user
+    }
+    finally {
+      loading.value = false
+      ready.value = true
+    }
+  }
+
+  async function loginWithGoogle(idToken: string) {
+    loading.value = true
+    try {
+      const response = await apiFetch<AuthResponse>('/auth/admin/oauth/google', {
+        method: 'POST',
+        body: { idToken },
+      })
+      assertBackofficeAccess(response.user)
       setSession(response.accessToken, response.user)
       return response.user
     }
@@ -130,6 +151,7 @@ export function useAuth() {
     displayName,
     hasPermission,
     login,
+    loginWithGoogle,
     fetchMe,
     ensureSession,
     logout,

@@ -12,7 +12,15 @@ Landing + admin web pour DropOne.
 
 ## Auth
 
-Le backoffice utilise le JWT du backend (`POST /api/v1/auth/admin/login`).
+Le backoffice utilise le JWT du backend :
+
+- Google : `POST /api/v1/auth/admin/oauth/google` (compte admin déjà existant)
+- Email / mot de passe : `POST /api/v1/auth/admin/login`
+
+Dans Google Cloud Console (client OAuth Web), ajouter les origines JavaScript autorisées :
+
+- `http://localhost:3001`
+- l’URL de production du backoffice (ex. `https://dropone.pro`)
 
 1. Créer un admin (seed) dans `backend-link` :
 
