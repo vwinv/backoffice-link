@@ -1,15 +1,19 @@
 <script setup lang="ts">
+import type { AppClient } from '~/composables/useAdminClients'
 import type {
   AdminSubscriptionItem,
   AdminSubscriptionsStats,
   SubscriptionOfferFilter,
+  SubscriptionOfferPrice,
 } from '~/composables/useAdminSubscriptions'
 
 definePageMeta({
   layout: 'admin',
 })
 
-const { getStats, listOffers, listSubscriptions } = useAdminSubscriptions()
+const { hasPermission } = useAuth()
+const { getStats, listOffers, listSubscriptions, createSubscription } = useAdminSubscriptions()
+const { listClients } = useAdminClients()
 
 const search = ref('')
 const status = ref('')
@@ -25,7 +29,33 @@ const loading = ref(false)
 const statsLoading = ref(true)
 const error = ref<string | null>(null)
 
+const showCreate = ref(false)
+const creating = ref(false)
+const formError = ref<string | null>(null)
+const clientQuery = ref('')
+const clientResults = ref<AppClient[]>([])
+const clientSearching = ref(false)
+const selectedClient = ref<AppClient | null>(null)
+
+const form = reactive({
+  offerId: '',
+  offerPriceId: '',
+  status: 'ACTIVE' as 'ACTIVE' | 'TRIAL',
+  purchasedSeats: 1,
+})
+
 let searchTimer: ReturnType<typeof setTimeout> | null = null
+let clientSearchTimer: ReturnType<typeof setTimeout> | null = null
+
+const canCreate = computed(() => hasPermission('subscriptions.create'))
+
+const selectedOffer = computed(() =>
+  offers.value.find(item => item.id === form.offerId) ?? null,
+)
+
+const selectedPrices = computed(() => selectedOffer.value?.prices ?? [])
+
+const isTeamOffer = computed(() => selectedOffer.value?.audience === 'TEAM')
 
 async function loadStats() {
   statsLoading.value = true
@@ -86,6 +116,109 @@ function onSearchInput() {
 function onFilterChange() {
   page.value = 1
   loadList()
+}
+
+function resetCreateForm() {
+  form.offerId = offers.value.find(item => (item.prices?.length ?? 0) > 0)?.id ?? ''
+  form.offerPriceId = selectedPrices.value[0]?.id ?? ''
+  form.status = 'ACTIVE'
+  form.purchasedSeats = Math.max(1, selectedOffer.value?.minSeats ?? 1)
+  clientQuery.value = ''
+  clientResults.value = []
+  selectedClient.value = null
+  formError.value = null
+}
+
+function openCreate() {
+  resetCreateForm()
+  onOfferChange()
+  showCreate.value = true
+}
+
+function closeCreate() {
+  if (creating.value) return
+  showCreate.value = false
+  formError.value = null
+}
+
+function onOfferChange() {
+  const prices = selectedPrices.value
+  form.offerPriceId = prices[0]?.id ?? ''
+  form.purchasedSeats = Math.max(1, selectedOffer.value?.minSeats ?? 1)
+}
+
+function onClientSearchInput() {
+  if (clientSearchTimer) clearTimeout(clientSearchTimer)
+  clientSearchTimer = setTimeout(() => {
+    searchClients()
+  }, 250)
+}
+
+async function searchClients() {
+  const q = clientQuery.value.trim()
+  if (q.length < 2) {
+    clientResults.value = []
+    return
+  }
+  clientSearching.value = true
+  try {
+    const response = await listClients({ search: q, isActive: 'true', limit: 8 })
+    clientResults.value = response.data
+  }
+  catch {
+    clientResults.value = []
+  }
+  finally {
+    clientSearching.value = false
+  }
+}
+
+function selectClient(client: AppClient) {
+  selectedClient.value = client
+  clientQuery.value = ''
+  clientResults.value = []
+}
+
+function clientLabel(client: AppClient) {
+  return `${client.firstName} ${client.lastName}`.trim() || client.email
+}
+
+function priceLabel(price: SubscriptionOfferPrice) {
+  const period
+    = price.billingType === 'YEARLY'
+      ? 'Annuel'
+      : price.billingType === 'LIFETIME'
+        ? 'À vie'
+        : 'Mensuel'
+  const amount = new Intl.NumberFormat('fr-FR').format(price.amount)
+  return `${price.label || period} · ${amount} ${price.currency}`
+}
+
+async function onCreate() {
+  if (!selectedClient.value || !form.offerId || !form.offerPriceId) {
+    formError.value = 'Choisissez un client, une offre et un tarif.'
+    return
+  }
+  creating.value = true
+  formError.value = null
+  try {
+    await createSubscription({
+      userId: selectedClient.value.id,
+      offerId: form.offerId,
+      offerPriceId: form.offerPriceId,
+      status: form.status,
+      purchasedSeats: isTeamOffer.value ? form.purchasedSeats : undefined,
+    })
+    showCreate.value = false
+    page.value = 1
+    await Promise.all([loadStats(), loadList()])
+  }
+  catch (err: unknown) {
+    formError.value = err instanceof ApiError ? err.message : 'Création impossible'
+  }
+  finally {
+    creating.value = false
+  }
 }
 
 function goToPage(next: number) {
@@ -189,7 +322,129 @@ await Promise.all([loadStats(), loadOffers(), loadList()])
           Statistiques et liste des abonnements premium DropOne.
         </p>
       </div>
+      <div v-if="canCreate" class="hero-actions">
+        <button type="button" class="primary" @click="openCreate">
+          Nouvel abonnement
+        </button>
+      </div>
     </header>
+
+    <Teleport to="body">
+      <div
+        v-if="showCreate"
+        class="modal-backdrop"
+        @click.self="closeCreate"
+      >
+        <div
+          class="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="create-sub-title"
+        >
+          <header class="modal-head">
+            <h2 id="create-sub-title">Nouvel abonnement</h2>
+            <button type="button" class="modal-close" aria-label="Fermer" @click="closeCreate">×</button>
+          </header>
+          <form class="modal-body" @submit.prevent="onCreate">
+            <p v-if="formError" class="banner-error" role="alert">{{ formError }}</p>
+
+            <label class="full">
+              <span>Client</span>
+              <div v-if="selectedClient" class="selected-client">
+                <strong>{{ clientLabel(selectedClient) }}</strong>
+                <small>{{ selectedClient.email }}</small>
+                <button type="button" class="btn-ghost" @click="selectedClient = null">
+                  Changer
+                </button>
+              </div>
+              <template v-else>
+                <input
+                  v-model="clientQuery"
+                  type="search"
+                  placeholder="Rechercher par nom ou e-mail…"
+                  autocomplete="off"
+                  @input="onClientSearchInput"
+                >
+                <p v-if="clientSearching" class="hint">Recherche…</p>
+                <ul v-else-if="clientResults.length" class="client-results">
+                  <li
+                    v-for="client in clientResults"
+                    :key="client.id"
+                  >
+                    <button type="button" @click="selectClient(client)">
+                      <strong>{{ clientLabel(client) }}</strong>
+                      <small>{{ client.email }}</small>
+                    </button>
+                  </li>
+                </ul>
+                <p v-else-if="clientQuery.trim().length >= 2" class="hint">
+                  Aucun client trouvé.
+                </p>
+              </template>
+            </label>
+
+            <div class="create-grid">
+              <label>
+                <span>Offre</span>
+                <select v-model="form.offerId" required @change="onOfferChange">
+                  <option value="" disabled>Choisir une offre</option>
+                  <option
+                    v-for="offer in offers.filter(item => (item.prices?.length ?? 0) > 0)"
+                    :key="offer.id"
+                    :value="offer.id"
+                  >
+                    {{ offer.title }}
+                    {{ offer.audience === 'TEAM' ? '· Pro' : '· Perso' }}
+                  </option>
+                </select>
+              </label>
+              <label>
+                <span>Tarif</span>
+                <select v-model="form.offerPriceId" required :disabled="!selectedPrices.length">
+                  <option
+                    v-for="price in selectedPrices"
+                    :key="price.id"
+                    :value="price.id"
+                  >
+                    {{ priceLabel(price) }}
+                  </option>
+                </select>
+              </label>
+              <label>
+                <span>Statut</span>
+                <select v-model="form.status">
+                  <option value="ACTIVE">Actif</option>
+                  <option value="TRIAL">Essai</option>
+                </select>
+              </label>
+              <label v-if="isTeamOffer">
+                <span>Sièges</span>
+                <input
+                  v-model.number="form.purchasedSeats"
+                  type="number"
+                  :min="selectedOffer?.minSeats || 1"
+                  required
+                >
+              </label>
+            </div>
+
+            <p class="hint">
+              L’abonnement en cours du client (s’il existe) sera annulé et
+              remplacé. Une offre pro lui permettra de créer son équipe dans l’app.
+            </p>
+
+            <footer class="modal-actions">
+              <button type="button" class="btn-ghost" :disabled="creating" @click="closeCreate">
+                Annuler
+              </button>
+              <button class="primary" type="submit" :disabled="creating || !selectedClient">
+                {{ creating ? 'Création…' : 'Créer l’abonnement' }}
+              </button>
+            </footer>
+          </form>
+        </div>
+      </div>
+    </Teleport>
 
     <p v-if="error" class="banner-error" role="alert">{{ error }}</p>
 
@@ -362,8 +617,21 @@ await Promise.all([loadStats(), loadOffers(), loadList()])
 }
 .hero {
   padding: 22px 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
   background: linear-gradient(135deg, rgba(10, 107, 255, 0.1), transparent 55%), var(--do-surface);
 }
+.hero-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.primary, .btn-ghost {
+  min-height: 34px; padding: 0 14px; border-radius: 8px; font-weight: 700;
+  cursor: pointer; font-size: 0.875rem;
+}
+.btn-ghost { border: 1.5px solid var(--do-line); background: #fff; }
+.primary { border: 0; background: var(--do-blue); color: #fff; }
+.primary:disabled, .btn-ghost:disabled { opacity: 0.45; cursor: not-allowed; }
 .eyebrow {
   margin: 0; display: inline-flex; padding: 6px 12px; border-radius: 999px;
   background: var(--do-blue-soft); color: var(--do-blue);
@@ -467,11 +735,61 @@ th {
 .pager button:disabled { opacity: 0.45; cursor: not-allowed; }
 .muted { margin: 0; color: var(--do-muted); }
 
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 80;
+  display: grid; place-items: center; padding: 20px;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+}
+.modal {
+  width: min(560px, 100%);
+  max-height: min(90vh, 720px);
+  overflow: auto;
+  border-radius: 16px;
+  background: var(--do-surface);
+  border: 1.5px solid var(--do-line);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
+}
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 18px; border-bottom: 1px solid var(--do-line);
+}
+.modal-head h2 { margin: 0; font-size: 1.1rem; font-weight: 800; }
+.modal-close {
+  width: 32px; height: 32px; border: 0; border-radius: 8px;
+  background: transparent; font-size: 1.4rem; line-height: 1; cursor: pointer; color: var(--do-muted);
+}
+.modal-close:hover { background: var(--do-surface-soft); color: inherit; }
+.modal-body { padding: 18px; display: grid; gap: 14px; }
+.create-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
+label { display: grid; gap: 6px; font-size: 0.85rem; font-weight: 600; }
+label.full { grid-column: 1 / -1; }
+.hint { margin: 0; color: var(--do-muted); font-size: 0.8rem; font-weight: 500; }
+.selected-client {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 12px; border-radius: 10px;
+  background: var(--do-surface-soft); border: 1px solid var(--do-line);
+}
+.selected-client strong { display: block; }
+.selected-client small { color: var(--do-muted); }
+.client-results {
+  margin: 0; padding: 0; list-style: none;
+  border: 1.5px solid var(--do-line); border-radius: 10px; overflow: hidden;
+}
+.client-results button {
+  width: 100%; text-align: left; padding: 10px 12px; border: 0;
+  background: #fff; cursor: pointer; display: grid; gap: 2px;
+}
+.client-results button:hover { background: var(--do-surface-soft); }
+.client-results strong { display: block; }
+.client-results small { color: var(--do-muted); }
+
 @media (max-width: 1100px) {
   .stats-grid { grid-template-columns: 1fr 1fr; }
   .panels { grid-template-columns: 1fr; }
 }
 @media (max-width: 700px) {
-  .stats-grid, .filters { grid-template-columns: 1fr; }
+  .stats-grid, .filters, .create-grid { grid-template-columns: 1fr; }
 }
 </style>

@@ -1,8 +1,20 @@
+export type SubscriptionOfferPrice = {
+  id: string
+  billingType: string
+  amount: number
+  pricePerSeat: number | null
+  currency: string
+  label: string | null
+}
+
 export type SubscriptionOfferFilter = {
   id: string
   title: string
   slug: string
   audience: string
+  minSeats?: number
+  listedInApp?: boolean
+  prices?: SubscriptionOfferPrice[]
 }
 
 export type AdminSubscriptionItem = {
@@ -129,9 +141,26 @@ export function useAdminSubscriptions() {
     )
   }
 
+  async function createSubscription(body: {
+    userId: string
+    offerId: string
+    offerPriceId: string
+    status?: 'ACTIVE' | 'TRIAL'
+    teamId?: string
+    purchasedSeats?: number
+    currentPeriodEnd?: string
+  }) {
+    return apiFetch<AdminSubscriptionItem>('/admin/subscriptions', {
+      method: 'POST',
+      token: token.value,
+      body,
+    })
+  }
+
   return {
     getStats,
     listOffers,
     listSubscriptions,
+    createSubscription,
   }
 }
