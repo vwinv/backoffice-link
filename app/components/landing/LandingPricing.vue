@@ -1,52 +1,52 @@
 <script setup lang="ts">
-const plans = [
+const { t } = useI18n()
+
+const planFeatures = computed(() => [
+  t('landing.pricing.features.card'),
+  t('landing.pricing.features.qr'),
+  t('landing.pricing.features.views'),
+  t('landing.pricing.features.storage'),
+])
+
+const plans = computed(() => [
   {
-    name: 'Gratuit',
-    subtitle: 'Pour découvrir Drop One',
+    key: 'free',
+    name: t('landing.pricing.plans.free.name'),
+    subtitle: t('landing.pricing.plans.free.subtitle'),
     price: '0',
-    unit: 'FCFA/mois',
-    cta: 'Commencer maintenant',
+    unit: t('landing.pricing.unit'),
+    cta: t('landing.pricing.plans.free.cta'),
     tone: 'free',
-    features: [
-      '1 carte personnelle',
-      'Partage via QR Code',
-      'Suivi des vues basique',
-      'Stockage limité',
-    ],
+    features: planFeatures.value,
   },
   {
-    name: 'Drop One Premium',
-    subtitle: 'Pour plus de fonctionnalités',
+    key: 'premium',
+    name: t('landing.pricing.plans.premium.name'),
+    subtitle: t('landing.pricing.plans.premium.subtitle'),
     price: '5 000',
-    unit: 'FCFA/mois',
-    cta: 'Essayez premium',
+    unit: t('landing.pricing.unit'),
+    cta: t('landing.pricing.plans.premium.cta'),
     tone: 'premium',
-    features: [
-      '1 carte personnelle',
-      'Partage via QR Code',
-      'Suivi des vues basique',
-      'Stockage limité',
-    ],
+    features: planFeatures.value,
   },
   {
-    name: 'Drop One Premium Pro équipe',
-    subtitle: 'Pour plus de fonctionnalités',
+    key: 'pro',
+    name: t('landing.pricing.plans.pro.name'),
+    subtitle: t('landing.pricing.plans.pro.subtitle'),
     price: '10 000',
-    unit: 'FCFA/mois',
-    cta: 'Essayer Pro',
+    unit: t('landing.pricing.unit'),
+    cta: t('landing.pricing.plans.pro.cta'),
     tone: 'pro',
-    features: [
-      '1 carte personnelle',
-      'Partage via QR Code',
-      'Suivi des vues basique',
-      'Stockage limité',
-    ],
+    features: planFeatures.value,
   },
-] as const
+])
 </script>
 
 <template>
-  <section id="tarifs" class="pricing">
+  <section
+    id="tarifs"
+    class="pricing"
+  >
     <div class="panel reveal">
       <div class="intro">
         <span class="badge">
@@ -62,23 +62,30 @@ const plans = [
               d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"
             />
           </svg>
-          Nos tarifs
+          {{ $t('landing.pricing.badge') }}
         </span>
         <h2 class="title">
-          Choisissez l’offre qui vous correspond le mieux
+          {{ $t('landing.pricing.title') }}
         </h2>
       </div>
 
       <div class="grid">
         <article
           v-for="(plan, index) in plans"
-          :key="plan.name"
+          :key="plan.key"
           class="plan"
           :class="plan.tone"
           :style="{ transitionDelay: `${index * 80}ms` }"
         >
-          <div class="icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="22" height="22">
+          <div
+            class="icon"
+            aria-hidden="true"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+            >
               <path
                 fill="currentColor"
                 d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"
@@ -87,7 +94,9 @@ const plans = [
           </div>
 
           <h3>{{ plan.name }}</h3>
-          <p class="subtitle">{{ plan.subtitle }}</p>
+          <p class="subtitle">
+            {{ plan.subtitle }}
+          </p>
 
           <p class="price">
             <strong>{{ plan.price }}</strong>
@@ -95,18 +104,27 @@ const plans = [
           </p>
 
           <ul>
-            <li v-for="feature in plan.features" :key="feature">
-              <span class="check" aria-hidden="true">✓</span>
+            <li
+              v-for="feature in plan.features"
+              :key="feature"
+            >
+              <span
+                class="check"
+                aria-hidden="true"
+              >✓</span>
               {{ feature }}
             </li>
           </ul>
 
-          <a class="cta" href="#telecharger">{{ plan.cta }}</a>
+          <a
+            class="cta"
+            href="#telecharger"
+          >{{ plan.cta }}</a>
         </article>
       </div>
 
       <p class="note">
-        Tous les prix incluent les taxes. Annulez à tout moment.
+        {{ $t('landing.pricing.note') }}
       </p>
     </div>
   </section>

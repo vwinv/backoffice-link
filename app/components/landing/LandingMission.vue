@@ -16,22 +16,22 @@
                 d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3m-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3m0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13m8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5"
               />
             </svg>
-            À propos de nous
+            {{ $t('landing.mission.badge') }}
           </span>
 
           <h2 class="title">
-            <span class="accent">Notre</span> mission
+            <span class="accent">{{ $t('landing.mission.titleAccent') }}</span> {{ $t('landing.mission.title') }}
           </h2>
 
           <p class="lead">
-            Chez Drop One, nous croyons que chaque connexion peut ouvrir la
-            porte à de grandes opportunités. Notre mission est de vous offrir
-            l’outil le plus simple et puissant pour partager, connecter,
-            impacter.
+            {{ $t('landing.mission.text') }}
           </p>
 
-          <a class="btn btn-primary cta" href="#contact">
-            En savoir plus sur nous
+          <a
+            class="btn btn-primary cta"
+            href="#contact"
+          >
+            {{ $t('landing.mission.cta') }}
             <span aria-hidden="true">→</span>
           </a>
         </div>
@@ -39,8 +39,8 @@
         <div class="visual">
           <img
             src="/images/IMG_1384.PNG"
-            alt="Mission Drop One — partage, réseau, statistiques et témoignage"
-          />
+            :alt="$t('landing.mission.alt')"
+          >
         </div>
       </div>
     </div>

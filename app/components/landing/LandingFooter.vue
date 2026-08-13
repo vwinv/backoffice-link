@@ -1,10 +1,12 @@
 <script setup lang="ts">
-const links = [
-  { href: '#a-propos', label: 'À propos' },
-  { href: '#fonctionnalites', label: 'Fonctionnalités' },
-  { href: '#tarifs', label: 'Tarifs' },
-  { href: '#contact', label: 'Nous contacter' },
-]
+const { t } = useI18n()
+
+const links = computed(() => [
+  { href: '#a-propos', label: t('landing.footer.about') },
+  { href: '#fonctionnalites', label: t('landing.footer.features') },
+  { href: '#tarifs', label: t('landing.footer.pricing') },
+  { href: '#contact', label: t('landing.footer.contact') },
+])
 
 const socials = [
   {
@@ -31,10 +33,13 @@ const socials = [
 </script>
 
 <template>
-  <footer id="contact" class="footer">
+  <footer
+    id="contact"
+    class="footer"
+  >
     <div class="inner">
       <div class="socials">
-        <span>Réseaux sociaux</span>
+        <span>{{ $t('landing.footer.socials') }}</span>
         <div class="icons">
           <a
             v-for="social in socials"
@@ -44,29 +49,51 @@ const socials = [
             target="_blank"
             rel="noopener noreferrer"
           >
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <path fill="currentColor" :d="social.path" />
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              aria-hidden="true"
+            >
+              <path
+                fill="currentColor"
+                :d="social.path"
+              />
             </svg>
           </a>
         </div>
       </div>
 
       <div class="row">
-        <nav aria-label="Pied de page">
-          <a v-for="link in links" :key="link.href" :href="link.href">
+        <nav :aria-label="$t('landing.footer.nav')">
+          <a
+            v-for="link in links"
+            :key="link.href"
+            :href="link.href"
+          >
             {{ link.label }}
           </a>
-          <NuxtLink to="/policy">Confidentialité</NuxtLink>
+          <NuxtLink to="/policy">
+            {{ $t('landing.footer.privacy') }}
+          </NuxtLink>
         </nav>
 
-        <a class="btn btn-primary download" href="#telecharger">
-          Télécharger l’application
+        <a
+          class="btn btn-primary download"
+          href="#telecharger"
+        >
+          {{ $t('landing.footer.download') }}
         </a>
       </div>
 
-      <div class="line" aria-hidden="true" />
+      <div
+        class="line"
+        aria-hidden="true"
+      />
 
-      <p class="copy">Copyright © {{ new Date().getFullYear() }} • MEGA</p>
+      <p class="copy">
+        Copyright © {{ new Date().getFullYear() }} • MEGA
+      </p>
     </div>
   </footer>
 </template>

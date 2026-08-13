@@ -1,32 +1,49 @@
 <template>
-  <section id="accueil" class="hero">
-    <div class="glow" aria-hidden="true" />
+  <section
+    id="accueil"
+    class="hero"
+  >
+    <div
+      class="glow"
+      aria-hidden="true"
+    />
     <div class="container grid">
       <div class="copy reveal">
-        <span class="badge">La carte de visite nouvelle génération</span>
+        <span class="badge">{{ $t('landing.hero.badge') }}</span>
         <h1>
-          Connectez-vous. Partagez.
-          <span>Marquez les esprits.</span>
+          {{ $t('landing.hero.title1') }}
+          <span>{{ $t('landing.hero.title2') }}</span>
         </h1>
         <p>
-          Drop One réinvente la façon dont vous partagez vos informations et
-          développez votre réseau.
+          {{ $t('landing.hero.text') }}
         </p>
         <div class="actions">
-          <a class="btn btn-primary" href="#telecharger">
-            Créer ma carte
+          <a
+            class="btn btn-primary"
+            href="#telecharger"
+          >
+            {{ $t('landing.hero.ctaCreate') }}
             <span aria-hidden="true">→</span>
           </a>
-          <a class="btn btn-outline" href="#fonctionnalites">
-            <span class="play" aria-hidden="true">▶</span>
-            Voir une démo
+          <a
+            class="btn btn-outline"
+            href="#fonctionnalites"
+          >
+            <span
+              class="play"
+              aria-hidden="true"
+            >▶</span>
+            {{ $t('landing.hero.ctaDemo') }}
           </a>
         </div>
         <div class="social-proof">
-          <div class="avatars" aria-hidden="true">
+          <div
+            class="avatars"
+            aria-hidden="true"
+          >
             <span /><span /><span /><span />
           </div>
-          <p>Plus de 2 000 personnes nous font déjà confiance.</p>
+          <p>{{ $t('landing.hero.proof') }}</p>
         </div>
       </div>
 
@@ -34,9 +51,9 @@
         <div class="visual-block">
           <img
             src="/images/IMG_1382.PNG"
-            alt="Aperçu de l'application DropOne sur mobile"
+            :alt="$t('landing.hero.alt')"
             class="phones"
-          />
+          >
         </div>
       </div>
     </div>

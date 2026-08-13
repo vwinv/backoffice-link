@@ -1,0 +1,260 @@
+{
+  "locale": {
+    "fr": "FR",
+    "en": "EN",
+    "switch": "Changer de langue"
+  },
+  "landing": {
+    "nav": {
+      "home": "Accueil",
+      "features": "Fonctionnalités",
+      "pricing": "Tarifs",
+      "contact": "Nous contacter",
+      "download": "Télécharger l'application",
+      "menu": "Menu",
+      "main": "Navigation principale"
+    },
+    "hero": {
+      "badge": "La carte de visite nouvelle génération",
+      "title1": "Connectez-vous. Partagez.",
+      "title2": "Marquez les esprits.",
+      "text": "Drop One réinvente la façon dont vous partagez vos informations et développez votre réseau.",
+      "ctaCreate": "Créer ma carte",
+      "ctaDemo": "Voir une démo",
+      "proof": "Plus de 2 000 personnes nous font déjà confiance.",
+      "alt": "Aperçu de l'application DropOne sur mobile"
+    },
+    "mission": {
+      "badge": "À propos de nous",
+      "titleAccent": "Notre",
+      "title": "mission",
+      "text": "Chez Drop One, nous croyons que chaque connexion peut ouvrir la porte à de grandes opportunités. Notre mission est de vous offrir l’outil le plus simple et puissant pour partager, connecter, impacter.",
+      "cta": "En savoir plus sur nous",
+      "alt": "Mission Drop One — partage, réseau, statistiques et témoignage"
+    },
+    "features": {
+      "badge": "Fonctionnalités clés",
+      "title": "Tout ce dont vous avez besoin",
+      "titleAccent": "pour créer des connexions durables",
+      "lead": "Des fonctionnalités qui rendent votre expérience Drop One fluide.",
+      "items": {
+        "card": {
+          "title": "Cartes disponibles personnalisables",
+          "text": "Créer une carte à votre image avec vos informations, liens et réseaux sociaux."
+        },
+        "share": {
+          "title": "Partage instantané",
+          "text": "Partagez votre carte via QR code, NFC, lien ou même Apple Wallet."
+        },
+        "views": {
+          "title": "Suivi des visites",
+          "text": "Sachez qui consulte votre carte, quand et comment. Ne manquez aucune opportunité."
+        },
+        "contacts": {
+          "title": "Gestion de contacts",
+          "text": "Enregistrer et retrouver facilement tous vos contacts au même endroit."
+        },
+        "stats": {
+          "title": "Statistiques avancées",
+          "text": "Analysez vos performances et comprenez votre impact réel sur votre réseau."
+        }
+      }
+    },
+    "models": {
+      "alt": "Des modèles de cartes Drop One variées, 100% adaptables à vos besoins"
+    },
+    "pricing": {
+      "badge": "Nos tarifs",
+      "title": "Choisissez l’offre qui vous correspond le mieux",
+      "note": "Tous les prix incluent les taxes. Annulez à tout moment.",
+      "unit": "FCFA/mois",
+      "plans": {
+        "free": {
+          "name": "Gratuit",
+          "subtitle": "Pour découvrir Drop One",
+          "cta": "Commencer maintenant"
+        },
+        "premium": {
+          "name": "Drop One Premium",
+          "subtitle": "Pour plus de fonctionnalités",
+          "cta": "Essayez premium"
+        },
+        "pro": {
+          "name": "Drop One Premium Pro équipe",
+          "subtitle": "Pour plus de fonctionnalités",
+          "cta": "Essayer Pro"
+        }
+      },
+      "features": {
+        "card": "1 carte personnelle",
+        "qr": "Partage via QR Code",
+        "views": "Suivi des vues basique",
+        "storage": "Stockage limité"
+      }
+    },
+    "cta": {
+      "title": "Prêt à faire passer votre réseau au niveau supérieur ?",
+      "text": "Rejoignez Drop One et transformez chaque rencontre en opportunité.",
+      "label": "Télécharger l’application sur",
+      "appStore": "Télécharger sur l’App Store",
+      "playStore": "Télécharger sur le Play Store"
+    },
+    "footer": {
+      "socials": "Réseaux sociaux",
+      "about": "À propos",
+      "features": "Fonctionnalités",
+      "pricing": "Tarifs",
+      "contact": "Nous contacter",
+      "privacy": "Confidentialité",
+      "download": "Télécharger l’application",
+      "nav": "Pied de page"
+    },
+    "support": {
+      "open": "Ouvrir le support",
+      "dialog": "Contacter le support",
+      "title": "Support DropOne",
+      "lead": "Décrivez votre problème — nous vous répondons par e-mail.",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "phoneOptional": "Optionnel",
+      "message": "Votre problème",
+      "messagePlaceholder": "Expliquez ce qui ne fonctionne pas…",
+      "send": "Envoyer",
+      "sending": "Envoi…",
+      "done": "Message envoyé. Notre équipe vous répondra sur votre e-mail.",
+      "close": "Fermer",
+      "error": "Envoi impossible"
+    }
+  },
+  "espace": {
+    "brandFallback": "Espace équipe",
+    "nav": {
+      "dashboard": "Tableau de bord",
+      "members": "Membres",
+      "invoices": "Factures"
+    },
+    "logout": "Déconnexion",
+    "login": {
+      "eyebrow": "Espace entreprise",
+      "title": "Connexion",
+      "lead": "Accédez au tableau de bord de votre équipe DropOne.",
+      "email": "Email",
+      "password": "Mot de passe",
+      "showPassword": "Afficher le mot de passe",
+      "hidePassword": "Masquer le mot de passe",
+      "submit": "Se connecter",
+      "submitting": "Connexion…",
+      "noTeam": "Aucun espace équipe accessible pour ce compte.",
+      "failed": "Connexion impossible"
+    },
+    "dashboard": {
+      "loading": "Chargement…",
+      "loadError": "Impossible de charger l’espace",
+      "offer": "Offre {title}",
+      "fallbackLead": "Espace de gestion entreprise",
+      "seats": "Sièges {used}",
+      "views": "Vues",
+      "shares": "Partages",
+      "saves": "Sauvegardes",
+      "cards": "Cartes",
+      "statsByMember": "Statistiques par membre",
+      "manageMembers": "Gérer les membres",
+      "member": "Membre",
+      "role": "Rôle",
+      "see": "Voir",
+      "seeStats": "Voir les statistiques de {name}"
+    },
+    "members": {
+      "title": "Membres",
+      "lead": "Créez des membres, augmentez vos sièges et payez immédiatement.",
+      "loading": "Chargement…",
+      "loadError": "Impossible de charger les membres",
+      "inviteOk": "Invitation envoyée. Le membre recevra un e-mail.",
+      "createError": "Création impossible",
+      "removeConfirm": "Retirer ce membre de l’équipe ?",
+      "removeError": "Suppression impossible",
+      "cancelError": "Annulation impossible",
+      "payError": "Paiement impossible",
+      "payUnavailable": "Paiement indisponible",
+      "seatsOk": "Sièges ajoutés avec succès.",
+      "confirmPayError": "Confirmation du paiement impossible",
+      "increaseSeats": "Augmenter les sièges",
+      "seatsToAdd": "Sièges à ajouter",
+      "currentSeats": "Actuels",
+      "afterPurchase": "Après achat",
+      "payNow": "À payer maintenant",
+      "payIncrease": "Payer et augmenter",
+      "redirecting": "Redirection…",
+      "createMember": "Créer un membre",
+      "email": "Email",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "jobTitle": "Poste",
+      "role": "Rôle",
+      "roleMember": "Membre",
+      "roleAdmin": "Administrateur",
+      "createInvite": "Créer / inviter",
+      "sending": "Envoi…",
+      "active": "Membres actifs",
+      "pending": "Invitations en attente",
+      "pendingEmpty": "Aucune invitation en attente.",
+      "waiting": "en attente",
+      "remove": "Retirer",
+      "cancel": "Annuler"
+    },
+    "invoices": {
+      "title": "Factures",
+      "lead": "Factures à venir (générées 10 jours avant l’échéance) et historique des paiements.",
+      "loading": "Chargement…",
+      "loadError": "Impossible de charger les factures",
+      "payOk": "Facture payée avec succès.",
+      "payConfirmOk": "Paiement confirmé. Facture mise à jour.",
+      "payConfirmError": "Confirmation du paiement impossible",
+      "payError": "Paiement impossible",
+      "payPreparing": "Préparation du paiement…",
+      "upcoming": "Factures à venir",
+      "upcomingEmpty": "Aucune facture à venir. Elle sera générée automatiquement 10 jours avant l’échéance de l’abonnement.",
+      "history": "Historique",
+      "historyEmpty": "Aucune facture payée pour le moment.",
+      "number": "N°",
+      "due": "Échéance",
+      "date": "Date",
+      "description": "Description",
+      "seats": "Sièges",
+      "amount": "Montant",
+      "status": "Statut",
+      "renewal": "Renouvellement DropOne",
+      "subscription": "Abonnement DropOne",
+      "overdue": "en retard de {days} j",
+      "today": "aujourd’hui",
+      "inDays": "dans {days} j",
+      "statusPaid": "Payée",
+      "statusPending": "À venir",
+      "statusFailed": "Échouée",
+      "statusRefunded": "Remboursée",
+      "open": "Ouvrir",
+      "print": "Imprimer",
+      "pay": "Payer",
+      "actions": "Actions facture",
+      "close": "Fermer",
+      "invoice": "Facture",
+      "issuer": "Émetteur",
+      "client": "Client",
+      "designation": "Désignation",
+      "total": "Total TTC",
+      "footer": "Document généré par DropOne · Merci pour votre confiance.",
+      "statusPay": "À payer",
+      "issuerBlurb": "Facturation abonnements professionnels DropOne"
+    },
+    "stats": {
+      "qr": "QR code",
+      "share": "Partage",
+      "link": "Lien",
+      "nfc": "NFC",
+      "app": "App",
+      "other": "Autre"
+    }
+  }
+}

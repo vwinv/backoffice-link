@@ -1,11 +1,14 @@
 <template>
-  <section id="modeles" class="models">
+  <section
+    id="modeles"
+    class="models"
+  >
     <div class="panel reveal">
       <img
         src="/images/IMG_1381.PNG"
-        alt="Des modèles de cartes Drop One variées, 100% adaptables à vos besoins"
+        :alt="$t('landing.models.alt')"
         class="shot"
-      />
+      >
     </div>
   </section>
 </template>

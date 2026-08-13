@@ -1,40 +1,45 @@
 <script setup lang="ts">
-const features = [
+const { t } = useI18n()
+
+const features = computed(() => [
   {
-    title: 'Cartes disponibles personnalisables',
-    text: 'Créer une carte à votre image avec vos informations, liens et réseaux sociaux.',
+    title: t('landing.features.items.card.title'),
+    text: t('landing.features.items.card.text'),
     tone: 'light',
     icon: 'card',
   },
   {
-    title: 'Partage instantané',
-    text: 'Partagez votre carte via QR code, NFC, lien ou même Apple Wallet.',
+    title: t('landing.features.items.share.title'),
+    text: t('landing.features.items.share.text'),
     tone: 'dark',
     icon: 'grid',
   },
   {
-    title: 'Suivi des visites',
-    text: 'Sachez qui consulte votre carte, quand et comment. Ne manquez aucune opportunité.',
+    title: t('landing.features.items.views.title'),
+    text: t('landing.features.items.views.text'),
     tone: 'light',
     icon: 'eye',
   },
   {
-    title: 'Gestion de contacts',
-    text: 'Enregistrer et retrouver facilement tous vos contacts au même endroit.',
+    title: t('landing.features.items.contacts.title'),
+    text: t('landing.features.items.contacts.text'),
     tone: 'blue',
     icon: 'people',
   },
   {
-    title: 'Statistiques avancées',
-    text: 'Analysez vos performances et comprenez votre impact réel sur votre réseau.',
+    title: t('landing.features.items.stats.title'),
+    text: t('landing.features.items.stats.text'),
     tone: 'light',
     icon: 'chart',
   },
-] as const
+] as const)
 </script>
 
 <template>
-  <section id="fonctionnalites" class="features">
+  <section
+    id="fonctionnalites"
+    class="features"
+  >
     <div class="panel reveal">
       <div class="intro">
         <span class="badge">
@@ -50,53 +55,71 @@ const features = [
               d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z"
             />
           </svg>
-          Fonctionnalités clés
+          {{ $t('landing.features.badge') }}
         </span>
 
         <h2 class="title">
-          Tout ce dont vous avez besoin
-          <span class="accent">pour créer des connexions durables</span>
+          {{ $t('landing.features.title') }}
+          <span class="accent">{{ $t('landing.features.titleAccent') }}</span>
         </h2>
 
         <p class="lead">
-          Des fonctionnalités qui rendent votre expérience Drop One fluide.
+          {{ $t('landing.features.lead') }}
         </p>
       </div>
 
       <div class="grid">
         <article
           v-for="(feature, index) in features"
-          :key="feature.title"
+          :key="feature.icon"
           class="card"
           :class="feature.tone"
           :style="{ transitionDelay: `${index * 70}ms` }"
         >
-          <div class="icon" aria-hidden="true">
-            <svg v-if="feature.icon === 'card'" viewBox="0 0 24 24">
+          <div
+            class="icon"
+            aria-hidden="true"
+          >
+            <svg
+              v-if="feature.icon === 'card'"
+              viewBox="0 0 24 24"
+            >
               <path
                 fill="currentColor"
                 d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2m0 14H4v-6h16v6m0-10H4V6h16v2"
               />
             </svg>
-            <svg v-else-if="feature.icon === 'grid'" viewBox="0 0 24 24">
+            <svg
+              v-else-if="feature.icon === 'grid'"
+              viewBox="0 0 24 24"
+            >
               <path
                 fill="currentColor"
                 d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"
               />
             </svg>
-            <svg v-else-if="feature.icon === 'eye'" viewBox="0 0 24 24">
+            <svg
+              v-else-if="feature.icon === 'eye'"
+              viewBox="0 0 24 24"
+            >
               <path
                 fill="currentColor"
                 d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5M12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5m0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"
               />
             </svg>
-            <svg v-else-if="feature.icon === 'people'" viewBox="0 0 24 24">
+            <svg
+              v-else-if="feature.icon === 'people'"
+              viewBox="0 0 24 24"
+            >
               <path
                 fill="currentColor"
                 d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3m-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3m0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13m8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5"
               />
             </svg>
-            <svg v-else viewBox="0 0 24 24">
+            <svg
+              v-else
+              viewBox="0 0 24 24"
+            >
               <path
                 fill="currentColor"
                 d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"

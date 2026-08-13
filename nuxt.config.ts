@@ -2,7 +2,22 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+  modules: ['@nuxtjs/i18n'],
   css: ['~/assets/css/main.css'],
+  i18n: {
+    defaultLocale: 'fr',
+    strategy: 'no_prefix',
+    locales: [
+      { code: 'fr', language: 'fr-FR', name: 'Français', file: 'fr.json' },
+      { code: 'en', language: 'en-US', name: 'English', file: 'en.json' },
+    ],
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'dropone_locale',
+      fallbackLocale: 'fr',
+      redirectOn: 'root',
+    },
+  },
   app: {
     head: {
       title: 'DropOne — Carte de visite digitale',
@@ -34,7 +49,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       // Surchargé automatiquement par NUXT_PUBLIC_API_BASE_URL
-      apiBaseUrl: 'http://localhost:3000/api/v1',
+      // apiBaseUrl: 'http://localhost:3000/api/v1',
+      apiBaseUrl: 'https://api.dropone.pro',
     },
   },
 })

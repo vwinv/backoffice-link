@@ -193,6 +193,26 @@ function statusClass(value: string) {
   return 'badge-off'
 }
 
+const audienceOptions: Array<{
+  value: NotificationAudience
+  title: string
+  hint: string
+}> = [
+  { value: 'ALL', title: 'Tous', hint: 'Clients actifs' },
+  { value: 'PREMIUM', title: 'Premium', hint: 'Abonnés payants' },
+  { value: 'FREE', title: 'Gratuit', hint: 'Sans abonnement' },
+  { value: 'USER_IDS', title: 'Ciblés', hint: 'Clients choisis' },
+]
+
+const previewTitle = computed(() => form.title.trim() || 'Titre de la notification')
+const previewBody = computed(() => form.body.trim() || 'Le message s’affichera ici.')
+const canSend = computed(() =>
+  form.title.trim().length >= 2
+  && form.body.trim().length >= 2
+  && (form.audience !== 'USER_IDS' || selectedClients.value.length > 0)
+  && !sending.value,
+)
+
 const overviewCards = computed(() => {
   const s = stats.value
   if (!s) return []
@@ -307,6 +327,7 @@ await Promise.all([loadStats(), loadCampaigns()])
             <td>
               <strong>{{ item.title }}</strong>
               <small class="body-preview">{{ item.body }}</small>
+              <small v-if="item.errorMessage" class="push-error">{{ item.errorMessage }}</small>
             </td>
             <td>{{ audienceLabel(item.audience) }}</td>
             <td>
@@ -315,7 +336,12 @@ await Promise.all([loadStats(), loadCampaigns()])
               </span>
             </td>
             <td>{{ formatNumber(item.targetCount) }}</td>
-            <td>{{ formatNumber(item.deliveredCount) }}</td>
+            <td>
+              {{ formatNumber(item.deliveredCount) }}
+              <small v-if="item.pushAttempted > 0" class="push-meta">
+                push {{ item.pushAttempted }}
+              </small>
+            </td>
             <td>{{ formatNumber(item.readCount) }}</td>
             <td>{{ formatDate(item.sentAt || item.createdAt) }}</td>
           </tr>
@@ -335,90 +361,192 @@ await Promise.all([loadStats(), loadCampaigns()])
         class="modal-backdrop"
         @click.self="closeCompose"
       >
-        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="notif-title">
+        <div
+          class="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="notif-title"
+        >
           <header class="modal-head">
-            <h2 id="notif-title">Nouvelle notification</h2>
-            <button type="button" class="modal-close" aria-label="Fermer" @click="closeCompose">×</button>
+            <div>
+              <p class="modal-kicker">Campagne</p>
+              <h2 id="notif-title">Nouvelle notification</h2>
+            </div>
+            <button
+              type="button"
+              class="modal-close"
+              aria-label="Fermer"
+              @click="closeCompose"
+            >
+              ×
+            </button>
           </header>
-          <form class="modal-body" @submit.prevent="onSend">
-            <p v-if="formError" class="banner-error" role="alert">{{ formError }}</p>
 
-            <label>
-              <span>Titre</span>
-              <input v-model="form.title" required minlength="2" maxlength="120" placeholder="Ex. Nouvelle offre Premium">
-            </label>
-
-            <label>
-              <span>Message</span>
-              <textarea
-                v-model="form.body"
-                required
-                minlength="2"
-                maxlength="1000"
-                rows="4"
-                placeholder="Texte affiché dans l’app…"
-              />
-            </label>
-
-            <fieldset class="audience">
-              <legend>Audience</legend>
-              <label class="radio">
-                <input v-model="form.audience" type="radio" value="ALL">
-                <span>Tous les clients actifs</span>
-              </label>
-              <label class="radio">
-                <input v-model="form.audience" type="radio" value="PREMIUM">
-                <span>Clients premium</span>
-              </label>
-              <label class="radio">
-                <input v-model="form.audience" type="radio" value="FREE">
-                <span>Clients gratuits</span>
-              </label>
-              <label class="radio">
-                <input v-model="form.audience" type="radio" value="USER_IDS">
-                <span>Clients ciblés</span>
-              </label>
-            </fieldset>
-
-            <div v-if="form.audience === 'USER_IDS'" class="target-box">
-              <label>
-                <span>Rechercher un client</span>
-                <input
-                  v-model="clientSearch"
-                  type="search"
-                  placeholder="Nom ou email…"
-                  @input="onClientSearchInput"
+          <form
+            class="compose"
+            @submit.prevent="onSend"
+          >
+            <div class="compose-grid">
+              <div class="compose-form">
+                <p
+                  v-if="formError"
+                  class="banner-error"
+                  role="alert"
                 >
-              </label>
-              <div v-if="clientSearching" class="muted">Recherche…</div>
-              <ul v-else-if="clientResults.length" class="client-results">
-                <li v-for="client in clientResults" :key="client.id">
-                  <button type="button" @click="addClient(client)">
-                    <strong>{{ fullName(client) }}</strong>
-                    <small>{{ client.email }}</small>
-                  </button>
-                </li>
-              </ul>
-              <div v-if="selectedClients.length" class="chips">
-                <span
-                  v-for="client in selectedClients"
-                  :key="client.id"
-                  class="chip"
+                  {{ formError }}
+                </p>
+
+                <label class="field">
+                  <span class="field-label">
+                    Titre
+                    <small>{{ form.title.length }}/120</small>
+                  </span>
+                  <input
+                    v-model="form.title"
+                    required
+                    minlength="2"
+                    maxlength="120"
+                    placeholder="Ex. Nouvelle offre Premium"
+                  >
+                </label>
+
+                <label class="field">
+                  <span class="field-label">
+                    Message
+                    <small>{{ form.body.length }}/1000</small>
+                  </span>
+                  <textarea
+                    v-model="form.body"
+                    required
+                    minlength="2"
+                    maxlength="1000"
+                    rows="5"
+                    placeholder="Texte affiché dans l’app et le push…"
+                  />
+                </label>
+
+                <div class="field">
+                  <span class="field-label">Destinataires</span>
+                  <div
+                    class="audience-grid"
+                    role="radiogroup"
+                    aria-label="Destinataires"
+                  >
+                    <button
+                      v-for="option in audienceOptions"
+                      :key="option.value"
+                      type="button"
+                      class="audience-card"
+                      :class="{ active: form.audience === option.value }"
+                      :aria-pressed="form.audience === option.value"
+                      @click="form.audience = option.value"
+                    >
+                      <strong>{{ option.title }}</strong>
+                      <small>{{ option.hint }}</small>
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  v-if="form.audience === 'USER_IDS'"
+                  class="target-box"
                 >
-                  {{ fullName(client) }}
-                  <button type="button" aria-label="Retirer" @click="removeClient(client.id)">×</button>
-                </span>
+                  <label class="field">
+                    <span class="field-label">Rechercher un client</span>
+                    <input
+                      v-model="clientSearch"
+                      type="search"
+                      placeholder="Nom ou email…"
+                      @input="onClientSearchInput"
+                    >
+                  </label>
+                  <div
+                    v-if="clientSearching"
+                    class="muted"
+                  >
+                    Recherche…
+                  </div>
+                  <ul
+                    v-else-if="clientResults.length"
+                    class="client-results"
+                  >
+                    <li
+                      v-for="client in clientResults"
+                      :key="client.id"
+                    >
+                      <button
+                        type="button"
+                        @click="addClient(client)"
+                      >
+                        <strong>{{ fullName(client) }}</strong>
+                        <small>{{ client.email }}</small>
+                      </button>
+                    </li>
+                  </ul>
+                  <div
+                    v-if="selectedClients.length"
+                    class="chips"
+                  >
+                    <span
+                      v-for="client in selectedClients"
+                      :key="client.id"
+                      class="chip"
+                    >
+                      {{ fullName(client) }}
+                      <button
+                        type="button"
+                        aria-label="Retirer"
+                        @click="removeClient(client.id)"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  </div>
+                  <p
+                    v-else
+                    class="muted"
+                  >
+                    Ajoutez au moins un client.
+                  </p>
+                </div>
               </div>
+
+              <aside class="compose-preview">
+                <p class="preview-label">Aperçu</p>
+                <div class="phone">
+                  <div class="phone-notch" />
+                  <div class="push-card">
+                    <div class="push-top">
+                      <span class="push-app">DropOne</span>
+                      <span class="push-time">maintenant</span>
+                    </div>
+                    <strong>{{ previewTitle }}</strong>
+                    <p>{{ previewBody }}</p>
+                  </div>
+                </div>
+                <p class="hint">
+                  Inbox app + push
+                  <template v-if="(stats?.pushTokens ?? 0) > 0">
+                    · {{ formatNumber(stats?.pushTokens) }} appareil(s)
+                  </template>
+                </p>
+              </aside>
             </div>
 
-            <p class="hint">
-              Livraison immédiate dans l’inbox app. Le push FCM sera branché ensuite
-              ({{ stats?.pushTokens ?? 0 }} token(s) déjà enregistrés).
-            </p>
-
             <footer class="modal-actions">
-              <button type="button" class="ghost" :disabled="sending" @click="closeCompose">Annuler</button>
-              <button type="submit" class="primary" :disabled="sending">
+              <button
+                type="button"
+                class="ghost"
+                :disabled="sending"
+                @click="closeCompose"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                class="primary"
+                :disabled="!canSend"
+              >
                 {{ sending ? 'Envoi…' : 'Envoyer' }}
               </button>
             </footer>
@@ -478,6 +606,13 @@ td strong { display: block; }
   display: block; margin-top: 4px; color: var(--do-muted);
   max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.push-error {
+  display: block; margin-top: 6px; color: #b42318; font-size: 0.75rem;
+  max-width: 420px; white-space: normal;
+}
+.push-meta {
+  display: block; margin-top: 4px; color: var(--do-muted); font-size: 0.75rem;
+}
 .empty { text-align: center; color: var(--do-muted); padding: 28px; }
 .badge {
   display: inline-flex; min-height: 26px; padding: 0 10px; border-radius: 999px;
@@ -502,33 +637,66 @@ td strong { display: block; }
   background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(2px);
 }
 .modal {
-  width: min(560px, 100%); max-height: min(90vh, 780px); overflow: auto;
-  border-radius: 16px; background: var(--do-surface);
+  width: min(860px, 100%); max-height: min(92vh, 820px); overflow: auto;
+  border-radius: 18px; background: #fff;
   border: 1.5px solid var(--do-line); box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
 }
 .modal-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 16px 18px; border-bottom: 1px solid var(--do-line);
-  position: sticky; top: 0; background: var(--do-surface); z-index: 1;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 18px 20px 14px; border-bottom: 1px solid var(--do-line);
+  position: sticky; top: 0; background: #fff; z-index: 1;
 }
-.modal-head h2 { margin: 0; font-size: 1.1rem; font-weight: 800; }
+.modal-kicker {
+  margin: 0 0 4px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--do-blue);
+}
+.modal-head h2 { margin: 0; font-size: 1.2rem; font-weight: 800; }
 .modal-close {
-  width: 32px; height: 32px; border: 0; border-radius: 8px;
-  background: transparent; font-size: 1.4rem; line-height: 1; cursor: pointer; color: var(--do-muted);
+  width: 36px; height: 36px; border: 0; border-radius: 10px;
+  background: var(--do-surface-soft); font-size: 1.4rem; line-height: 1;
+  cursor: pointer; color: var(--do-muted);
 }
-.modal-body { padding: 18px; display: grid; gap: 14px; }
-label { display: grid; gap: 6px; font-size: 0.85rem; font-weight: 600; }
-.audience {
-  margin: 0; padding: 12px; border-radius: 12px; border: 1px solid var(--do-line);
-  display: grid; gap: 8px;
+.compose { display: grid; }
+.compose-grid {
+  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(240px, 0.85fr);
+  gap: 22px; padding: 20px;
 }
-.audience legend { padding: 0 4px; font-weight: 800; font-size: 0.85rem; }
-.radio { display: flex; align-items: center; gap: 10px; font-weight: 600; }
-.target-box { display: grid; gap: 10px; }
+.compose-form { display: grid; gap: 16px; align-content: start; }
+.field { display: grid; gap: 8px; min-width: 0; }
+.field-label {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  font-size: 0.85rem; font-weight: 700;
+}
+.field-label small { font-weight: 600; color: var(--do-muted); }
+.compose-form input,
+.compose-form textarea {
+  width: 100%; min-height: 44px; padding: 12px 14px;
+  border: 1.5px solid var(--do-line); border-radius: 12px;
+  font: inherit; background: #fff; color: var(--do-ink);
+}
+.compose-form textarea { min-height: 128px; resize: vertical; line-height: 1.45; }
+.audience-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
+}
+.audience-card {
+  display: grid; gap: 2px; text-align: left; min-height: 64px;
+  padding: 10px 12px; border-radius: 12px; cursor: pointer;
+  border: 1.5px solid var(--do-line); background: #fff; color: inherit;
+}
+.audience-card strong { font-size: 0.9rem; }
+.audience-card small { color: var(--do-muted); font-size: 0.78rem; }
+.audience-card.active {
+  border-color: var(--do-blue); background: var(--do-blue-soft);
+}
+.audience-card.active small { color: var(--do-blue); }
+.target-box {
+  display: grid; gap: 10px; padding: 12px;
+  border: 1px dashed var(--do-line); border-radius: 12px; background: var(--do-surface-soft);
+}
 .client-results { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .client-results button {
   width: 100%; text-align: left; border: 1px solid var(--do-line); border-radius: 10px;
-  background: var(--do-surface-soft); padding: 10px 12px; cursor: pointer;
+  background: #fff; padding: 10px 12px; cursor: pointer;
 }
 .client-results strong { display: block; }
 .client-results small { color: var(--do-muted); }
@@ -541,14 +709,55 @@ label { display: grid; gap: 6px; font-size: 0.85rem; font-weight: 600; }
 .chip button {
   border: 0; background: transparent; cursor: pointer; color: inherit; font-size: 1rem; line-height: 1;
 }
-.hint { margin: 0; color: var(--do-muted); font-size: 0.85rem; }
+.compose-preview {
+  display: grid; align-content: start; gap: 12px;
+  padding: 16px; border-radius: 16px; background: var(--do-surface-soft);
+}
+.preview-label {
+  margin: 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--do-muted);
+}
+.phone {
+  position: relative; min-height: 280px; padding: 28px 16px 16px;
+  border-radius: 28px; background: #0c0d10; overflow: hidden;
+}
+.phone-notch {
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  width: 72px; height: 8px; border-radius: 999px; background: #2a2a2e;
+}
+.push-card {
+  display: grid; gap: 6px; padding: 12px 14px; border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96); color: #0c0d10;
+}
+.push-top {
+  display: flex; justify-content: space-between; gap: 8px;
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: #5b616e;
+}
+.push-card strong {
+  font-size: 0.95rem; line-height: 1.25; overflow-wrap: anywhere;
+}
+.push-card p {
+  margin: 0; color: #5b616e; font-size: 0.85rem; line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.hint { margin: 0; color: var(--do-muted); font-size: 0.82rem; line-height: 1.4; }
 .muted { color: var(--do-muted); font-size: 0.85rem; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.modal-actions {
+  display: flex; justify-content: flex-end; gap: 10px;
+  padding: 14px 20px 18px; border-top: 1px solid var(--do-line);
+  position: sticky; bottom: 0; background: #fff;
+}
 
 @media (max-width: 1000px) {
   .stats-grid { grid-template-columns: 1fr 1fr; }
 }
+@media (max-width: 760px) {
+  .compose-grid { grid-template-columns: 1fr; }
+  .compose-preview { order: -1; }
+}
 @media (max-width: 640px) {
   .stats-grid, .filters { grid-template-columns: 1fr; }
+  .audience-grid { grid-template-columns: 1fr; }
 }
 </style>

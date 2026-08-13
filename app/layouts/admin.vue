@@ -38,6 +38,12 @@ const { user, displayName, logout, hasPermission } = useAuth()
           </NuxtLink>
           <NuxtLink
             v-if="hasPermission('subscriptions.view') || hasPermission('*')"
+            to="/admin/offers"
+          >
+            Offres
+          </NuxtLink>
+          <NuxtLink
+            v-if="hasPermission('subscriptions.view') || hasPermission('*')"
             to="/admin/subscriptions"
           >
             Abonnements
@@ -47,6 +53,12 @@ const { user, displayName, logout, hasPermission } = useAuth()
             to="/admin/notifications"
           >
             Notifications
+          </NuxtLink>
+          <NuxtLink
+            v-if="hasPermission('support.view') || hasPermission('*')"
+            to="/admin/support"
+          >
+            Support
           </NuxtLink>
         </nav>
       </div>

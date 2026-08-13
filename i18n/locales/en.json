@@ -1,0 +1,260 @@
+{
+  "locale": {
+    "fr": "FR",
+    "en": "EN",
+    "switch": "Change language"
+  },
+  "landing": {
+    "nav": {
+      "home": "Home",
+      "features": "Features",
+      "pricing": "Pricing",
+      "contact": "Contact us",
+      "download": "Download the app",
+      "menu": "Menu",
+      "main": "Main navigation"
+    },
+    "hero": {
+      "badge": "The next-generation business card",
+      "title1": "Connect. Share.",
+      "title2": "Make an impression.",
+      "text": "Drop One reinvents how you share your details and grow your network.",
+      "ctaCreate": "Create my card",
+      "ctaDemo": "Watch a demo",
+      "proof": "More than 2,000 people already trust us.",
+      "alt": "DropOne mobile app preview"
+    },
+    "mission": {
+      "badge": "About us",
+      "titleAccent": "Our",
+      "title": "mission",
+      "text": "At Drop One, we believe every connection can open the door to great opportunities. Our mission is to give you the simplest, most powerful tool to share, connect, and make an impact.",
+      "cta": "Learn more about us",
+      "alt": "Drop One mission — sharing, network, stats and testimonials"
+    },
+    "features": {
+      "badge": "Key features",
+      "title": "Everything you need",
+      "titleAccent": "to build lasting connections",
+      "lead": "Features that make your Drop One experience seamless.",
+      "items": {
+        "card": {
+          "title": "Customizable cards",
+          "text": "Create a card that reflects you with your details, links, and social profiles."
+        },
+        "share": {
+          "title": "Instant sharing",
+          "text": "Share your card via QR code, NFC, link, or even Apple Wallet."
+        },
+        "views": {
+          "title": "Visit tracking",
+          "text": "Know who views your card, when and how. Never miss an opportunity."
+        },
+        "contacts": {
+          "title": "Contact management",
+          "text": "Save and find all your contacts easily in one place."
+        },
+        "stats": {
+          "title": "Advanced analytics",
+          "text": "Analyze your performance and understand your real impact on your network."
+        }
+      }
+    },
+    "models": {
+      "alt": "A variety of Drop One card templates, fully adaptable to your needs"
+    },
+    "pricing": {
+      "badge": "Our pricing",
+      "title": "Choose the plan that fits you best",
+      "note": "All prices include taxes. Cancel anytime.",
+      "unit": "FCFA/month",
+      "plans": {
+        "free": {
+          "name": "Free",
+          "subtitle": "Discover Drop One",
+          "cta": "Get started"
+        },
+        "premium": {
+          "name": "Drop One Premium",
+          "subtitle": "For more features",
+          "cta": "Try Premium"
+        },
+        "pro": {
+          "name": "Drop One Premium Pro team",
+          "subtitle": "For more features",
+          "cta": "Try Pro"
+        }
+      },
+      "features": {
+        "card": "1 personal card",
+        "qr": "Share via QR Code",
+        "views": "Basic view tracking",
+        "storage": "Limited storage"
+      }
+    },
+    "cta": {
+      "title": "Ready to take your network to the next level?",
+      "text": "Join Drop One and turn every meeting into an opportunity.",
+      "label": "Download the app on",
+      "appStore": "Download on the App Store",
+      "playStore": "Download on the Play Store"
+    },
+    "footer": {
+      "socials": "Social networks",
+      "about": "About",
+      "features": "Features",
+      "pricing": "Pricing",
+      "contact": "Contact us",
+      "privacy": "Privacy",
+      "download": "Download the app",
+      "nav": "Footer"
+    },
+    "support": {
+      "open": "Open support",
+      "dialog": "Contact support",
+      "title": "DropOne Support",
+      "lead": "Describe your issue — we’ll reply by email.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "phone": "Phone",
+      "phoneOptional": "Optional",
+      "message": "Your issue",
+      "messagePlaceholder": "Explain what isn’t working…",
+      "send": "Send",
+      "sending": "Sending…",
+      "done": "Message sent. Our team will reply to your email.",
+      "close": "Close",
+      "error": "Unable to send"
+    }
+  },
+  "espace": {
+    "brandFallback": "Team space",
+    "nav": {
+      "dashboard": "Dashboard",
+      "members": "Members",
+      "invoices": "Invoices"
+    },
+    "logout": "Log out",
+    "login": {
+      "eyebrow": "Business space",
+      "title": "Sign in",
+      "lead": "Access your DropOne team dashboard.",
+      "email": "Email",
+      "password": "Password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "noTeam": "No team space available for this account.",
+      "failed": "Unable to sign in"
+    },
+    "dashboard": {
+      "loading": "Loading…",
+      "loadError": "Unable to load the workspace",
+      "offer": "Plan {title}",
+      "fallbackLead": "Business management workspace",
+      "seats": "Seats {used}",
+      "views": "Views",
+      "shares": "Shares",
+      "saves": "Saves",
+      "cards": "Cards",
+      "statsByMember": "Stats by member",
+      "manageMembers": "Manage members",
+      "member": "Member",
+      "role": "Role",
+      "see": "View",
+      "seeStats": "View stats for {name}"
+    },
+    "members": {
+      "title": "Members",
+      "lead": "Create members, increase seats and pay immediately.",
+      "loading": "Loading…",
+      "loadError": "Unable to load members",
+      "inviteOk": "Invitation sent. The member will receive an email.",
+      "createError": "Unable to create",
+      "removeConfirm": "Remove this member from the team?",
+      "removeError": "Unable to remove",
+      "cancelError": "Unable to cancel",
+      "payError": "Unable to pay",
+      "payUnavailable": "Payment unavailable",
+      "seatsOk": "Seats added successfully.",
+      "confirmPayError": "Unable to confirm payment",
+      "increaseSeats": "Increase seats",
+      "seatsToAdd": "Seats to add",
+      "currentSeats": "Current",
+      "afterPurchase": "After purchase",
+      "payNow": "Pay now",
+      "payIncrease": "Pay and increase",
+      "redirecting": "Redirecting…",
+      "createMember": "Create a member",
+      "email": "Email",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "jobTitle": "Job title",
+      "role": "Role",
+      "roleMember": "Member",
+      "roleAdmin": "Admin",
+      "createInvite": "Create / invite",
+      "sending": "Sending…",
+      "active": "Active members",
+      "pending": "Pending invitations",
+      "pendingEmpty": "No pending invitations.",
+      "waiting": "pending",
+      "remove": "Remove",
+      "cancel": "Cancel"
+    },
+    "invoices": {
+      "title": "Invoices",
+      "lead": "Upcoming invoices (generated 10 days before due date) and payment history.",
+      "loading": "Loading…",
+      "loadError": "Unable to load invoices",
+      "payOk": "Invoice paid successfully.",
+      "payConfirmOk": "Payment confirmed. Invoice updated.",
+      "payConfirmError": "Unable to confirm payment",
+      "payError": "Unable to pay",
+      "payPreparing": "Preparing payment…",
+      "upcoming": "Upcoming invoices",
+      "upcomingEmpty": "No upcoming invoice. It will be generated automatically 10 days before the subscription due date.",
+      "history": "History",
+      "historyEmpty": "No paid invoices yet.",
+      "number": "No.",
+      "due": "Due date",
+      "date": "Date",
+      "description": "Description",
+      "seats": "Seats",
+      "amount": "Amount",
+      "status": "Status",
+      "renewal": "DropOne renewal",
+      "subscription": "DropOne subscription",
+      "overdue": "{days} days overdue",
+      "today": "today",
+      "inDays": "in {days} days",
+      "statusPaid": "Paid",
+      "statusPending": "Upcoming",
+      "statusFailed": "Failed",
+      "statusRefunded": "Refunded",
+      "open": "Open",
+      "print": "Print",
+      "pay": "Pay",
+      "actions": "Invoice actions",
+      "close": "Close",
+      "invoice": "Invoice",
+      "issuer": "Issuer",
+      "client": "Client",
+      "designation": "Description",
+      "total": "Total incl. tax",
+      "footer": "Document generated by DropOne · Thank you for your trust.",
+      "statusPay": "Due",
+      "issuerBlurb": "DropOne professional subscription billing"
+    },
+    "stats": {
+      "qr": "QR code",
+      "share": "Share",
+      "link": "Link",
+      "nfc": "NFC",
+      "app": "App",
+      "other": "Other"
+    }
+  }
+}

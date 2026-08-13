@@ -1,12 +1,13 @@
 <script setup lang="ts">
+const { t } = useI18n()
 const open = ref(false)
 
-const links = [
-  { href: '#accueil', label: 'Accueil' },
-  { href: '#fonctionnalites', label: 'Fonctionnalités' },
-  { href: '#tarifs', label: 'Tarifs' },
-  { href: '#contact', label: 'Nous contacter' },
-]
+const links = computed(() => [
+  { href: '#accueil', label: t('landing.nav.home') },
+  { href: '#fonctionnalites', label: t('landing.nav.features') },
+  { href: '#tarifs', label: t('landing.nav.pricing') },
+  { href: '#contact', label: t('landing.nav.contact') },
+])
 
 function close() {
   open.value = false
@@ -16,34 +17,62 @@ function close() {
 <template>
   <header class="header">
     <div class="container bar">
-      <a href="#accueil" class="brand" @click="close">
-        <img src="/images/logo.png" alt="DropOne" width="200" height="54" />
+      <a
+        href="#accueil"
+        class="brand"
+        @click="close"
+      >
+        <img
+          src="/images/logo.png"
+          alt="DropOne"
+          width="200"
+          height="54"
+        >
       </a>
 
-      <nav class="nav desktop" aria-label="Navigation principale">
-        <a v-for="link in links" :key="link.href" :href="link.href">
+      <nav
+        class="nav desktop"
+        :aria-label="$t('landing.nav.main')"
+      >
+        <a
+          v-for="link in links"
+          :key="link.href"
+          :href="link.href"
+        >
           {{ link.label }}
         </a>
       </nav>
 
-      <a class="btn btn-primary download desktop" href="#telecharger">
-        Télécharger l'application
-      </a>
+      <div class="right desktop">
+        <LocaleSwitcher />
+        <a
+          class="btn btn-primary download"
+          href="#telecharger"
+        >
+          {{ $t('landing.nav.download') }}
+        </a>
+      </div>
 
-      <button
-        class="menu-btn"
-        type="button"
-        :aria-expanded="open"
-        aria-label="Menu"
-        @click="open = !open"
-      >
-        <span />
-        <span />
-        <span />
-      </button>
+      <div class="mobile-tools">
+        <LocaleSwitcher />
+        <button
+          class="menu-btn"
+          type="button"
+          :aria-expanded="open"
+          :aria-label="$t('landing.nav.menu')"
+          @click="open = !open"
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+      </div>
     </div>
 
-    <div v-if="open" class="mobile-panel">
+    <div
+      v-if="open"
+      class="mobile-panel"
+    >
       <a
         v-for="link in links"
         :key="link.href"
@@ -52,8 +81,12 @@ function close() {
       >
         {{ link.label }}
       </a>
-      <a class="btn btn-primary" href="#telecharger" @click="close">
-        Télécharger l'application
+      <a
+        class="btn btn-primary"
+        href="#telecharger"
+        @click="close"
+      >
+        {{ $t('landing.nav.download') }}
       </a>
     </div>
   </header>
@@ -98,14 +131,26 @@ function close() {
   color: var(--do-blue);
 }
 
+.right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .download {
   min-height: 46px;
   padding-inline: 18px;
   font-size: 0.92rem;
 }
 
-.menu-btn {
+.mobile-tools {
   display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.menu-btn {
+  display: flex;
   width: 42px;
   height: 42px;
   border: 0;
@@ -143,7 +188,7 @@ function close() {
     display: none;
   }
 
-  .menu-btn,
+  .mobile-tools,
   .mobile-panel {
     display: flex;
   }
