@@ -21,9 +21,41 @@ function messageFromBody(body: ApiErrorBody | null, fallback: string): string {
   return Array.isArray(body.message) ? body.message.join(', ') : body.message
 }
 
+function normalizeApiBaseUrl(value: string): string {
+  const trimmed = value.replace(/\/+$/, '')
+  if (!trimmed) return trimmed
+  if (/\/api\/v\d+$/i.test(trimmed)) return trimmed
+  return `${trimmed}/api/v1`
+}
+
+function humanizeApiError(
+  statusCode: number,
+  body: ApiErrorBody | string | null,
+  fallback: string,
+): string {
+  const raw =
+    typeof body === 'string'
+      ? body
+      : messageFromBody(body, fallback)
+
+  if (/cannot\s+(get|post|put|patch|delete)\s+\//i.test(raw)) {
+    if (statusCode === 404) {
+      return 'Service introuvable. Vérifiez la configuration de l’API.'
+    }
+    return 'Connexion impossible pour le moment. Réessayez plus tard.'
+  }
+
+  if (statusCode === 401) return raw || 'E-mail ou mot de passe incorrect'
+  if (statusCode === 403) {
+    return raw || 'Accès réservé aux utilisateurs du backoffice'
+  }
+
+  return raw || fallback
+}
+
 export function useApi() {
   const config = useRuntimeConfig()
-  const baseURL = String(config.public.apiBaseUrl || '').replace(/\/+$/, '')
+  const baseURL = normalizeApiBaseUrl(String(config.public.apiBaseUrl || ''))
 
   async function apiFetch<T>(
     path: string,
@@ -57,14 +89,19 @@ export function useApi() {
       const fetchError = error as {
         statusCode?: number
         status?: number
-        data?: ApiErrorBody
+        data?: ApiErrorBody | string
         message?: string
       }
       const statusCode = fetchError.statusCode ?? fetchError.status ?? 500
-      const body = fetchError.data ?? null
+      const data = fetchError.data
+      const body = data && typeof data === 'object' ? data : null
       throw new ApiError(
         statusCode,
-        messageFromBody(body, fetchError.message || 'Erreur réseau'),
+        humanizeApiError(
+          statusCode,
+          body ?? (typeof data === 'string' ? data : null),
+          fetchError.message || 'Erreur réseau',
+        ),
         body,
       )
     }
