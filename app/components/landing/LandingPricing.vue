@@ -1,45 +1,198 @@
 <script setup lang="ts">
+type OfferAudience = 'PERSONAL' | 'TEAM'
+type BillingType = 'MONTHLY' | 'YEARLY' | 'LIFETIME'
+
+type PublicOfferPrice = {
+  id: string
+  billingType: BillingType
+  priceLabel?: string | null
+  priceAmount: number
+  pricePerSeat?: number | null
+  currency: string
+  discountPercent?: number | null
+  badgeLabel?: string | null
+  isPopular: boolean
+  sortOrder: number
+}
+
+type PublicOffer = {
+  id: string
+  title: string
+  slug: string
+  subtitle?: string | null
+  audience: OfferAudience
+  canCustomize: boolean
+  maxTeamMembers: number
+  minSeats: number
+  hasPortfolio: boolean
+  hasWallet: boolean
+  hasAnalytics: boolean
+  hasVisitorInsights: boolean
+  hasSocialLinks: boolean
+  maxAiScans: number
+  maxShares: number
+  sortOrder: number
+  prices: PublicOfferPrice[]
+}
+
+type LandingPlan = {
+  key: string
+  name: string
+  subtitle: string
+  price: string
+  unit: string
+  badge: string | null
+  cta: string
+  tone: 'free' | 'premium' | 'pro'
+  features: string[]
+}
+
 const { t } = useI18n()
+const { apiFetch } = useApi()
 
-const planFeatures = computed(() => [
-  t('landing.pricing.features.card'),
-  t('landing.pricing.features.qr'),
-  t('landing.pricing.features.views'),
-  t('landing.pricing.features.storage'),
-])
+const { data, pending } = await useAsyncData('landing-offers', async () => {
+  try {
+    const items = await apiFetch<PublicOffer[]>('/subscriptions/offers')
+    return { items: Array.isArray(items) ? items : [], failed: false }
+  }
+  catch {
+    return { items: [] as PublicOffer[], failed: true }
+  }
+})
 
-const plans = computed(() => [
-  {
-    key: 'free',
-    name: t('landing.pricing.plans.free.name'),
-    subtitle: t('landing.pricing.plans.free.subtitle'),
-    price: '0',
-    unit: t('landing.pricing.unit'),
-    cta: t('landing.pricing.plans.free.cta'),
-    tone: 'free',
-    features: planFeatures.value,
-  },
-  {
-    key: 'premium',
-    name: t('landing.pricing.plans.premium.name'),
-    subtitle: t('landing.pricing.plans.premium.subtitle'),
-    price: '5 000',
-    unit: t('landing.pricing.unit'),
-    cta: t('landing.pricing.plans.premium.cta'),
-    tone: 'premium',
-    features: planFeatures.value,
-  },
-  {
-    key: 'pro',
-    name: t('landing.pricing.plans.pro.name'),
-    subtitle: t('landing.pricing.plans.pro.subtitle'),
-    price: '10 000',
-    unit: t('landing.pricing.unit'),
-    cta: t('landing.pricing.plans.pro.cta'),
-    tone: 'pro',
-    features: planFeatures.value,
-  },
-])
+function formatAmount(value: number) {
+  const rounded = Math.round(Number.isFinite(value) ? value : 0)
+  return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 })
+    .format(rounded)
+    .replace(/\u00a0/g, ' ')
+    .replace(/\u202f/g, ' ')
+}
+
+function pickPrice(offer: PublicOffer): PublicOfferPrice | null {
+  const prices = [...(offer.prices ?? [])].sort(
+    (a, b) => a.sortOrder - b.sortOrder,
+  )
+  return (
+    prices.find(price => price.billingType === 'MONTHLY')
+    ?? prices.find(price => price.billingType === 'YEARLY')
+    ?? prices.find(price => price.isPopular)
+    ?? prices[0]
+    ?? null
+  )
+}
+
+function isPerSeat(price: PublicOfferPrice) {
+  return price.pricePerSeat != null && price.pricePerSeat > 0
+}
+
+function displayAmount(price: PublicOfferPrice | null) {
+  if (!price || price.priceAmount <= 0) return '0'
+  const amount = isPerSeat(price)
+    ? (price.pricePerSeat ?? price.priceAmount)
+    : price.priceAmount
+  return formatAmount(amount)
+}
+
+function displayUnit(price: PublicOfferPrice | null) {
+  if (!price || price.priceAmount <= 0) {
+    return t('landing.pricing.unit.free')
+  }
+
+  const seat = isPerSeat(price)
+  if (price.billingType === 'YEARLY') {
+    return t(seat ? 'landing.pricing.unit.yearlySeat' : 'landing.pricing.unit.yearly')
+  }
+  if (price.billingType === 'LIFETIME') {
+    return t(seat ? 'landing.pricing.unit.lifetimeSeat' : 'landing.pricing.unit.lifetime')
+  }
+  return t(seat ? 'landing.pricing.unit.monthlySeat' : 'landing.pricing.unit.monthly')
+}
+
+function planTone(
+  offer: PublicOffer,
+  price: PublicOfferPrice | null,
+): LandingPlan['tone'] {
+  if (!price || price.priceAmount <= 0) return 'free'
+  if (offer.audience === 'TEAM') return 'pro'
+  return 'premium'
+}
+
+function offerFeatures(offer: PublicOffer) {
+  const features: string[] = []
+
+  if (offer.audience === 'TEAM') {
+    if (offer.maxTeamMembers > 0) {
+      features.push(t('landing.pricing.features.teamLimit', { n: offer.maxTeamMembers }))
+    }
+    else {
+      features.push(t('landing.pricing.features.teamSeats', { n: Math.max(offer.minSeats, 1) }))
+    }
+  }
+  else {
+    features.push(t('landing.pricing.features.personalCard'))
+  }
+
+  features.push(t('landing.pricing.features.qr'))
+
+  if (offer.maxShares < 0) {
+    features.push(t('landing.pricing.features.sharesUnlimited'))
+  }
+  else if (offer.maxShares > 0) {
+    features.push(t('landing.pricing.features.shares', { n: offer.maxShares }))
+  }
+
+  if (offer.canCustomize) {
+    features.push(t('landing.pricing.features.customize'))
+  }
+  if (offer.hasWallet) {
+    features.push(t('landing.pricing.features.wallet'))
+  }
+  if (offer.hasAnalytics) {
+    features.push(t('landing.pricing.features.analytics'))
+  }
+  if (offer.hasVisitorInsights) {
+    features.push(t('landing.pricing.features.visitors'))
+  }
+  if (offer.hasSocialLinks) {
+    features.push(t('landing.pricing.features.social'))
+  }
+  if (offer.hasPortfolio) {
+    features.push(t('landing.pricing.features.portfolio'))
+  }
+  if (offer.maxAiScans < 0) {
+    features.push(t('landing.pricing.features.aiUnlimited'))
+  }
+  else if (offer.maxAiScans > 0) {
+    features.push(t('landing.pricing.features.aiScans', { n: offer.maxAiScans }))
+  }
+
+  return features
+}
+
+const plans = computed<LandingPlan[]>(() => {
+  const offers = data.value?.items ?? []
+  return offers.map((offer) => {
+    const price = pickPrice(offer)
+    const isFree = !price || price.priceAmount <= 0
+    return {
+      key: offer.id,
+      name: offer.title,
+      subtitle: offer.subtitle?.trim() || '',
+      price: displayAmount(price),
+      unit: displayUnit(price),
+      badge: price?.badgeLabel?.trim()
+        || (price?.isPopular ? t('landing.pricing.popular') : null),
+      cta: isFree
+        ? t('landing.pricing.ctaFree')
+        : t('landing.pricing.cta'),
+      tone: planTone(offer, price),
+      features: offerFeatures(offer),
+    }
+  })
+})
+
+const loadFailed = computed(() => data.value?.failed === true)
+const isEmpty = computed(() => !pending.value && !loadFailed.value && plans.value.length === 0)
 </script>
 
 <template>
@@ -69,7 +222,42 @@ const plans = computed(() => [
         </h2>
       </div>
 
-      <div class="grid">
+      <div
+        v-if="pending"
+        class="grid"
+        aria-busy="true"
+        :aria-label="$t('landing.pricing.loading')"
+      >
+        <article
+          v-for="index in 3"
+          :key="`skeleton-${index}`"
+          class="plan skeleton"
+        >
+          <div class="icon" />
+          <div class="skel-line skel-title" />
+          <div class="skel-line skel-sub" />
+          <div class="skel-line skel-price" />
+        </article>
+      </div>
+
+      <p
+        v-else-if="loadFailed"
+        class="status"
+      >
+        {{ $t('landing.pricing.error') }}
+      </p>
+
+      <p
+        v-else-if="isEmpty"
+        class="status"
+      >
+        {{ $t('landing.pricing.empty') }}
+      </p>
+
+      <div
+        v-else
+        class="grid"
+      >
         <article
           v-for="(plan, index) in plans"
           :key="plan.key"
@@ -93,8 +281,18 @@ const plans = computed(() => [
             </svg>
           </div>
 
+          <p
+            v-if="plan.badge && plan.tone !== 'free'"
+            class="popular"
+          >
+            {{ plan.badge }}
+          </p>
+
           <h3>{{ plan.name }}</h3>
-          <p class="subtitle">
+          <p
+            v-if="plan.subtitle"
+            class="subtitle"
+          >
             {{ plan.subtitle }}
           </p>
 
@@ -225,6 +423,29 @@ const plans = computed(() => [
   height: 18px;
 }
 
+.popular {
+  margin: 10px 0 0;
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--do-blue-soft);
+  color: var(--do-blue);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.plan.premium .popular {
+  background: #fff4cc;
+  color: #8a6a00;
+}
+
+.plan.pro .popular {
+  background: #ececef;
+  color: #111;
+}
+
 h3 {
   margin: 12px 0 0;
   font-size: 1.05rem;
@@ -338,6 +559,48 @@ li {
   text-align: center;
   color: rgba(255, 255, 255, 0.72);
   font-size: 0.88rem;
+}
+
+.status {
+  margin: 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.95rem;
+}
+
+.plan.skeleton {
+  min-height: 220px;
+  pointer-events: none;
+}
+
+.skel-line {
+  border-radius: 8px;
+  background: linear-gradient(90deg, #ececef 25%, #f6f6f8 50%, #ececef 75%);
+  background-size: 200% 100%;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.skel-title {
+  margin-top: 12px;
+  height: 18px;
+  width: 72%;
+}
+
+.skel-sub {
+  margin-top: 8px;
+  height: 12px;
+  width: 90%;
+}
+
+.skel-price {
+  margin-top: 16px;
+  height: 28px;
+  width: 48%;
+}
+
+@keyframes pulse {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }
 
 @media (max-width: 960px) {

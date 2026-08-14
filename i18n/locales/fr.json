@@ -67,29 +67,36 @@
       "badge": "Nos tarifs",
       "title": "Choisissez l’offre qui vous correspond le mieux",
       "note": "Tous les prix incluent les taxes. Annulez à tout moment.",
-      "unit": "FCFA/mois",
-      "plans": {
-        "free": {
-          "name": "Gratuit",
-          "subtitle": "Pour découvrir Drop One",
-          "cta": "Commencer maintenant"
-        },
-        "premium": {
-          "name": "Drop One Premium",
-          "subtitle": "Pour plus de fonctionnalités",
-          "cta": "Essayez premium"
-        },
-        "pro": {
-          "name": "Drop One Premium Pro équipe",
-          "subtitle": "Pour plus de fonctionnalités",
-          "cta": "Essayer Pro"
-        }
+      "cta": "Télécharger l’application",
+      "ctaFree": "Commencer maintenant",
+      "loading": "Chargement des offres…",
+      "empty": "Les offres seront bientôt disponibles.",
+      "error": "Impossible de charger les tarifs pour le moment.",
+      "popular": "Populaire",
+      "unit": {
+        "monthly": "FCFA/mois",
+        "yearly": "FCFA/an",
+        "lifetime": "FCFA - paiement unique",
+        "monthlySeat": "FCFA / utilisateur / mois",
+        "yearlySeat": "FCFA / utilisateur / an",
+        "lifetimeSeat": "FCFA / utilisateur - à vie",
+        "free": "Gratuit"
       },
       "features": {
-        "card": "1 carte personnelle",
+        "personalCard": "1 carte personnelle",
+        "teamSeats": "À partir de {n} utilisateurs",
+        "teamLimit": "Jusqu’à {n} membres",
         "qr": "Partage via QR Code",
-        "views": "Suivi des vues basique",
-        "storage": "Stockage limité"
+        "sharesUnlimited": "Partages illimités",
+        "shares": "Jusqu’à {n} partages",
+        "customize": "Personnalisation de la carte",
+        "wallet": "Wallet (Apple / Google)",
+        "analytics": "Statistiques de vues",
+        "visitors": "Insights visiteurs",
+        "social": "Réseaux sociaux",
+        "portfolio": "Portfolio",
+        "aiUnlimited": "Scans IA illimités",
+        "aiScans": "{n} scans IA"
       }
     },
     "cta": {

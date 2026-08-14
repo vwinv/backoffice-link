@@ -67,29 +67,36 @@
       "badge": "Our pricing",
       "title": "Choose the plan that fits you best",
       "note": "All prices include taxes. Cancel anytime.",
-      "unit": "FCFA/month",
-      "plans": {
-        "free": {
-          "name": "Free",
-          "subtitle": "Discover Drop One",
-          "cta": "Get started"
-        },
-        "premium": {
-          "name": "Drop One Premium",
-          "subtitle": "For more features",
-          "cta": "Try Premium"
-        },
-        "pro": {
-          "name": "Drop One Premium Pro team",
-          "subtitle": "For more features",
-          "cta": "Try Pro"
-        }
+      "cta": "Download the app",
+      "ctaFree": "Get started",
+      "loading": "Loading plans…",
+      "empty": "Plans will be available soon.",
+      "error": "Unable to load pricing right now.",
+      "popular": "Popular",
+      "unit": {
+        "monthly": "FCFA/month",
+        "yearly": "FCFA/year",
+        "lifetime": "FCFA - one-time",
+        "monthlySeat": "FCFA / user / month",
+        "yearlySeat": "FCFA / user / year",
+        "lifetimeSeat": "FCFA / user - lifetime",
+        "free": "Free"
       },
       "features": {
-        "card": "1 personal card",
+        "personalCard": "1 personal card",
+        "teamSeats": "From {n} users",
+        "teamLimit": "Up to {n} members",
         "qr": "Share via QR Code",
-        "views": "Basic view tracking",
-        "storage": "Limited storage"
+        "sharesUnlimited": "Unlimited sharing",
+        "shares": "Up to {n} shares",
+        "customize": "Card customization",
+        "wallet": "Wallet (Apple / Google)",
+        "analytics": "View analytics",
+        "visitors": "Visitor insights",
+        "social": "Social links",
+        "portfolio": "Portfolio",
+        "aiUnlimited": "Unlimited AI scans",
+        "aiScans": "{n} AI scans"
       }
     },
     "cta": {
