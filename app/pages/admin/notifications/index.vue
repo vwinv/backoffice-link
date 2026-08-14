@@ -154,12 +154,12 @@ function fullName(client: AppClient) {
 }
 
 function formatNumber(value: number | undefined) {
-  if (value == null) return '—'
+  if (value == null) return '-'
   return new Intl.NumberFormat('fr-FR').format(value)
 }
 
 function formatDate(iso: string | null | undefined) {
-  if (!iso) return '—'
+  if (!iso) return '-'
   return new Intl.DateTimeFormat('fr-FR', {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -527,7 +527,7 @@ await Promise.all([loadStats(), loadCampaigns()])
                 <p class="hint">
                   Inbox app + push
                   <template v-if="(stats?.pushTokens ?? 0) > 0">
-                    · {{ formatNumber(stats?.pushTokens) }} appareil(s)
+                    - {{ formatNumber(stats?.pushTokens) }} appareil(s)
                   </template>
                 </p>
               </aside>

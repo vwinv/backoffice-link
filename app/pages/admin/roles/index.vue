@@ -167,9 +167,9 @@ await load()
           <h2>{{ role.name }}</h2>
           <p>{{ role.description || 'Sans description' }}</p>
           <small>
-            {{ role.permissionKeys.length }} permission(s) ·
+            {{ role.permissionKeys.length }} permission(s) -
             {{ role.usersCount }} utilisateur(s)
-            <template v-if="role.isSystem"> · système</template>
+            <template v-if="role.isSystem"> - système</template>
           </small>
         </div>
         <div class="role-actions">

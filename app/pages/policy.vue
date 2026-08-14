@@ -2,7 +2,7 @@
 useSeoMeta({
   title: 'Politique de confidentialité | DropOne',
   description:
-    'Politique de confidentialité de DropOne — comment MEGA - SN collecte, utilise et protège vos données personnelles.',
+    'Politique de confidentialité de DropOne - comment MEGA - SN collecte, utilise et protège vos données personnelles.',
 })
 
 const sections = [

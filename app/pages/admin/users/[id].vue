@@ -223,7 +223,7 @@ await load()
       <div class="meta-grid">
         <div class="meta-item">
           <span class="meta-label">Téléphone</span>
-          <strong>{{ detail.phone || '—' }}</strong>
+          <strong>{{ detail.phone || '-' }}</strong>
         </div>
         <div class="meta-item">
           <span class="meta-label">Authentification</span>

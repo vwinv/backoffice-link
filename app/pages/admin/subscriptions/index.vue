@@ -191,7 +191,7 @@ function priceLabel(price: SubscriptionOfferPrice) {
         ? 'À vie'
         : 'Mensuel'
   const amount = new Intl.NumberFormat('fr-FR').format(price.amount)
-  return `${price.label || period} · ${amount} ${price.currency}`
+  return `${price.label || period} - ${amount} ${price.currency}`
 }
 
 async function onCreate() {
@@ -228,17 +228,17 @@ function goToPage(next: number) {
 }
 
 function formatNumber(value: number | undefined) {
-  if (value == null) return '—'
+  if (value == null) return '-'
   return new Intl.NumberFormat('fr-FR').format(value)
 }
 
 function formatMoney(value: number | undefined, currency = 'FCFA') {
-  if (value == null) return '—'
+  if (value == null) return '-'
   return `${new Intl.NumberFormat('fr-FR').format(value)} ${currency}`
 }
 
 function formatDate(iso: string | null | undefined) {
-  if (!iso) return '—'
+  if (!iso) return '-'
   return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(iso))
 }
 
@@ -273,12 +273,12 @@ function billingLabel(value: string) {
 function subscriberLabel(item: AdminSubscriptionItem) {
   if (item.user) return item.user.fullName
   if (item.team) return item.team.name
-  return '—'
+  return '-'
 }
 
 function subscriberSub(item: AdminSubscriptionItem) {
   if (item.user) return item.user.email
-  if (item.team) return `Équipe · /${item.team.slug}`
+  if (item.team) return `Équipe - /${item.team.slug}`
   return ''
 }
 
@@ -294,7 +294,7 @@ const overviewCards = computed(() => {
     {
       label: 'Abonnements actifs',
       value: formatNumber(s.totals.active),
-      hint: `${s.totals.paying} payants · ${s.totals.trial} en essai`,
+      hint: `${s.totals.paying} payants - ${s.totals.trial} en essai`,
     },
     {
       label: 'Total',
@@ -394,7 +394,7 @@ await Promise.all([loadStats(), loadOffers(), loadList()])
                     :value="offer.id"
                   >
                     {{ offer.title }}
-                    {{ offer.audience === 'TEAM' ? '· Pro' : '· Perso' }}
+                    {{ offer.audience === 'TEAM' ? '- Pro' : '- Perso' }}
                   </option>
                 </select>
               </label>
@@ -482,7 +482,7 @@ await Promise.all([loadStats(), loadOffers(), loadList()])
             <div>
               <strong>{{ offer.title }}</strong>
               <small>
-                {{ offer.activeCount }} en cours · {{ offer.subscriptionsCount }} au total
+                {{ offer.activeCount }} en cours - {{ offer.subscriptionsCount }} au total
               </small>
             </div>
             <span class="offer-revenue">
@@ -570,7 +570,7 @@ await Promise.all([loadStats(), loadOffers(), loadList()])
               </div>
             </td>
             <td>
-              <strong>{{ item.offer?.title || item.plan?.name || '—' }}</strong>
+              <strong>{{ item.offer?.title || item.plan?.name || '-' }}</strong>
             </td>
             <td>
               <span class="badge" :class="statusClass(item.status)">
@@ -582,7 +582,7 @@ await Promise.all([loadStats(), loadOffers(), loadList()])
               <template v-if="item.price">
                 {{ formatMoney(item.price.amount, item.price.currency) }}
               </template>
-              <template v-else>—</template>
+              <template v-else>-</template>
             </td>
             <td>{{ formatDate(item.currentPeriodEnd) }}</td>
             <td>{{ formatDate(item.createdAt) }}</td>

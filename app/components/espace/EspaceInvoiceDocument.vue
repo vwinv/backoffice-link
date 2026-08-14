@@ -24,7 +24,7 @@ function formatAmount(amount: number, currency: string) {
 }
 
 function formatDate(value: string | null) {
-  if (!value) return '—'
+  if (!value) return '-'
   const tag = locale.value === 'en' ? 'en-US' : 'fr-FR'
   return new Date(value).toLocaleDateString(tag, {
     day: '2-digit',
@@ -164,7 +164,7 @@ function onPrint() {
                 v-if="party?.client"
                 class="muted"
               >
-                {{ party.client.name }} · {{ party.client.email }}
+                {{ party.client.name }} - {{ party.client.email }}
               </p>
               <p
                 v-if="party?.client?.phone"
@@ -189,7 +189,7 @@ function onPrint() {
                 :key="index"
               >
                 <td>{{ line.label }}</td>
-                <td>{{ line.seats ?? '—' }}</td>
+                <td>{{ line.seats ?? '-' }}</td>
                 <td>{{ formatAmount(line.amount, invoice.currency) }}</td>
               </tr>
             </tbody>

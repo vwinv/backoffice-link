@@ -46,7 +46,7 @@ function fullName(client: AppClientDetail) {
 }
 
 function formatDate(iso: string | null | undefined) {
-  if (!iso) return '—'
+  if (!iso) return '-'
   return new Intl.DateTimeFormat('fr-FR', {
     dateStyle: 'long',
     timeStyle: 'short',
@@ -54,7 +54,7 @@ function formatDate(iso: string | null | undefined) {
 }
 
 function formatShortDate(iso: string | null | undefined) {
-  if (!iso) return '—'
+  if (!iso) return '-'
   return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(iso))
 }
 
@@ -191,7 +191,7 @@ await load()
       <div class="meta-grid">
         <div class="meta-item">
           <span class="meta-label">Téléphone</span>
-          <strong>{{ detail.phone || '—' }}</strong>
+          <strong>{{ detail.phone || '-' }}</strong>
         </div>
         <div class="meta-item">
           <span class="meta-label">Cartes</span>
@@ -226,11 +226,11 @@ await load()
           <dl class="info-list">
             <div>
               <dt>Prénom</dt>
-              <dd>{{ detail.firstName || '—' }}</dd>
+              <dd>{{ detail.firstName || '-' }}</dd>
             </div>
             <div>
               <dt>Nom</dt>
-              <dd>{{ detail.lastName || '—' }}</dd>
+              <dd>{{ detail.lastName || '-' }}</dd>
             </div>
             <div>
               <dt>Email</dt>
@@ -240,7 +240,7 @@ await load()
             </div>
             <div>
               <dt>Téléphone</dt>
-              <dd>{{ detail.phone || '—' }}</dd>
+              <dd>{{ detail.phone || '-' }}</dd>
             </div>
             <div>
               <dt>Inscription</dt>
@@ -275,7 +275,7 @@ await load()
             <p>
               {{ billingLabel(detail.subscription.billingPeriod) }}
               <template v-if="detail.subscription.currentPeriodEnd">
-                · fin le {{ formatShortDate(detail.subscription.currentPeriodEnd) }}
+                - fin le {{ formatShortDate(detail.subscription.currentPeriodEnd) }}
               </template>
             </p>
           </div>
@@ -294,8 +294,8 @@ await load()
               <div>
                 <strong>{{ sub.offer?.title || sub.plan?.name || 'Abonnement' }}</strong>
                 <small>
-                  {{ statusLabel(sub.status) }} · {{ billingLabel(sub.billingPeriod) }}
-                  · {{ formatShortDate(sub.createdAt) }}
+                  {{ statusLabel(sub.status) }} - {{ billingLabel(sub.billingPeriod) }}
+                  - {{ formatShortDate(sub.createdAt) }}
                 </small>
               </div>
             </article>
@@ -326,7 +326,7 @@ await load()
               <h3>{{ card.firstName }} {{ card.lastName }}</h3>
               <p>
                 {{ card.jobTitle || 'Sans poste' }}
-                <template v-if="card.company"> · {{ card.company }}</template>
+                <template v-if="card.company"> - {{ card.company }}</template>
               </p>
               <div class="card-item-foot">
                 <small>/{{ card.slug }}</small>
@@ -361,7 +361,7 @@ await load()
               <div>
                 <strong>{{ team.name }}</strong>
                 <small>
-                  Propriétaire · {{ team.membersCount }} membre(s) · /{{ team.slug }}
+                  Propriétaire - {{ team.membersCount }} membre(s) - /{{ team.slug }}
                 </small>
               </div>
               <span class="badge" :class="team.isActive ? 'badge-ok' : 'badge-off'">
@@ -375,7 +375,7 @@ await load()
             >
               <div>
                 <strong>{{ team.name }}</strong>
-                <small>{{ teamRoleLabel(team.role) }} · /{{ team.slug }}</small>
+                <small>{{ teamRoleLabel(team.role) }} - /{{ team.slug }}</small>
               </div>
               <span class="badge" :class="team.isActive ? 'badge-ok' : 'badge-off'">
                 {{ team.isActive ? 'Active' : 'Inactive' }}

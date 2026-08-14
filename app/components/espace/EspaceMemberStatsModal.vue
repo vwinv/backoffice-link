@@ -365,7 +365,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
                 v-if="detail"
                 class="sub"
               >
-                {{ detail.member.user.email }} · {{ detail.member.role }}
+                {{ detail.member.user.email }} - {{ detail.member.role }}
               </p>
             </div>
           </div>

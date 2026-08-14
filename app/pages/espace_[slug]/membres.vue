@@ -407,7 +407,7 @@ function formatAmount(amount: number, currency = 'FCFA') {
             </button>
           </div>
           <p class="seats-lead">
-            {{ seatPurchase.offerTitle || $t('espace.brandFallback') }} ·
+            {{ seatPurchase.offerTitle || $t('espace.brandFallback') }} -
             {{ formatAmount(seatPurchase.pricePerSeat || 0, seatPurchase.currency) }}
             / utilisateur supplémentaire
           </p>
@@ -466,7 +466,7 @@ function formatAmount(amount: number, currency = 'FCFA') {
           >
             <div>
               <strong>{{ memberName(member.user) }}</strong>
-              <span>{{ member.user.email }} · {{ member.role }}</span>
+              <span>{{ member.user.email }} - {{ member.role }}</span>
             </div>
             <button
               v-if="member.role !== 'OWNER'"
@@ -499,7 +499,7 @@ function formatAmount(amount: number, currency = 'FCFA') {
           >
             <div>
               <strong>{{ invite.email }}</strong>
-              <span>{{ invite.role }} · {{ $t('espace.members.waiting') }}</span>
+              <span>{{ invite.role }} - {{ $t('espace.members.waiting') }}</span>
             </div>
             <button
               type="button"

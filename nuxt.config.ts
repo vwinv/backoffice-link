@@ -20,13 +20,13 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: 'DropOne — Carte de visite digitale',
+      title: 'DropOne - Carte de visite digitale',
       htmlAttrs: { lang: 'fr' },
       meta: [
         {
           name: 'description',
           content:
-            'DropOne — Connectez-vous. Partagez. Marquez les esprits. La carte de visite digitale pour particuliers et entreprises.',
+            'DropOne - Connectez-vous. Partagez. Marquez les esprits. La carte de visite digitale pour particuliers et entreprises.',
         },
       ],
       link: [

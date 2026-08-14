@@ -93,7 +93,7 @@ function formatAmount(amount: number, currency: string) {
 }
 
 function formatDate(value: string | null) {
-  if (!value) return '—'
+  if (!value) return '-'
   const tag = locale.value === 'en' ? 'en-US' : 'fr-FR'
   return new Date(value).toLocaleDateString(tag, {
     day: '2-digit',
@@ -271,7 +271,7 @@ async function onPay(invoice: EspaceInvoice) {
                     </ul>
                   </div>
                 </td>
-                <td>{{ invoice.seats ?? '—' }}</td>
+                <td>{{ invoice.seats ?? '-' }}</td>
                 <td>{{ formatAmount(invoice.amount, invoice.currency) }}</td>
                 <td>
                   <span
@@ -341,7 +341,7 @@ async function onPay(invoice: EspaceInvoice) {
                     </ul>
                   </div>
                 </td>
-                <td>{{ invoice.seats ?? '—' }}</td>
+                <td>{{ invoice.seats ?? '-' }}</td>
                 <td>{{ formatAmount(invoice.amount, invoice.currency) }}</td>
                 <td>
                   <span

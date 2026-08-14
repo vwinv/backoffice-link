@@ -365,7 +365,7 @@ await load()
         </p>
         <h1>Offres</h1>
         <p class="lead">
-          Quotas, fonctionnalités et tarifs — y compris l’offre gratuite.
+          Quotas, fonctionnalités et tarifs - y compris l’offre gratuite.
         </p>
       </div>
       <button
@@ -427,7 +427,7 @@ await load()
                 <small>
                   <code>{{ offer.slug }}</code>
                   <template v-if="offer.subtitle">
-                    · {{ offer.subtitle }}
+                    - {{ offer.subtitle }}
                   </template>
                 </small>
               </div>
@@ -698,7 +698,7 @@ await load()
                       <td>
                         {{
                           price.pricePerSeat == null
-                            ? '—'
+                            ? '-'
                             : formatMoney(price.pricePerSeat, price.currency)
                         }}
                       </td>

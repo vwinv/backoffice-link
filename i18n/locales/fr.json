@@ -30,7 +30,7 @@
       "title": "mission",
       "text": "Chez Drop One, nous croyons que chaque connexion peut ouvrir la porte à de grandes opportunités. Notre mission est de vous offrir l’outil le plus simple et puissant pour partager, connecter, impacter.",
       "cta": "En savoir plus sur nous",
-      "alt": "Mission Drop One — partage, réseau, statistiques et témoignage"
+      "alt": "Mission Drop One - partage, réseau, statistiques et témoignage"
     },
     "features": {
       "badge": "Fonctionnalités clés",
@@ -113,7 +113,7 @@
       "open": "Ouvrir le support",
       "dialog": "Contacter le support",
       "title": "Support DropOne",
-      "lead": "Décrivez votre problème — nous vous répondons par e-mail.",
+      "lead": "Décrivez votre problème - nous vous répondons par e-mail.",
       "firstName": "Prénom",
       "lastName": "Nom",
       "email": "E-mail",
@@ -244,7 +244,7 @@
       "client": "Client",
       "designation": "Désignation",
       "total": "Total TTC",
-      "footer": "Document généré par DropOne · Merci pour votre confiance.",
+      "footer": "Document généré par DropOne - Merci pour votre confiance.",
       "statusPay": "À payer",
       "issuerBlurb": "Facturation abonnements professionnels DropOne"
     },

@@ -17,12 +17,12 @@ await useAsyncData('admin-dashboard', async () => {
 })
 
 function formatNumber(value: number | undefined) {
-  if (value == null) return '—'
+  if (value == null) return '-'
   return new Intl.NumberFormat('fr-FR').format(value)
 }
 
 function formatMoney(value: number | undefined, currency = 'FCFA') {
-  if (value == null) return '—'
+  if (value == null) return '-'
   return `${new Intl.NumberFormat('fr-FR').format(value)} ${currency}`
 }
 
@@ -133,7 +133,7 @@ const topOffers = computed(() => stats.value?.revenue.byOffer.slice(0, 5) ?? [])
           <div class="chart-head">
             <h2>Offres les plus rentables</h2>
             <p>
-              Classement par chiffre d’affaires (hors essais) —
+              Classement par chiffre d’affaires (hors essais) -
               total {{ formatMoney(stats.revenue.total, stats.revenue.currency) }}
             </p>
           </div>
@@ -157,7 +157,7 @@ const topOffers = computed(() => stats.value?.revenue.byOffer.slice(0, 5) ?? [])
                 <div class="offer-meta">
                   <strong>{{ offer.title }}</strong>
                   <small>
-                    {{ offer.subscriptionsCount }} abo ·
+                    {{ offer.subscriptionsCount }} abo -
                     actif {{ formatMoney(offer.activeRevenue, stats.revenue.currency) }}
                   </small>
                 </div>

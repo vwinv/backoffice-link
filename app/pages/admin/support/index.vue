@@ -148,7 +148,7 @@ function statusClass(value: string) {
 }
 
 function formatDate(iso: string | null | undefined) {
-  if (!iso) return '—'
+  if (!iso) return '-'
   return new Intl.DateTimeFormat('fr-FR', {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -363,7 +363,7 @@ await Promise.all([loadStats(), loadList()])
             </div>
 
             <section class="bubble inbound">
-              <header>Message initial · {{ formatDate(detail.createdAt) }}</header>
+              <header>Message initial - {{ formatDate(detail.createdAt) }}</header>
               <p>{{ detail.message }}</p>
             </section>
 
@@ -375,9 +375,9 @@ await Promise.all([loadStats(), loadList()])
               <header>
                 Réponse
                 <template v-if="reply.sentBy">
-                  · {{ reply.sentBy.name }}
+                  - {{ reply.sentBy.name }}
                 </template>
-                · {{ formatDate(reply.createdAt) }}
+                - {{ formatDate(reply.createdAt) }}
               </header>
               <p>{{ reply.body }}</p>
             </section>
