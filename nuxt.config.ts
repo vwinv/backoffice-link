@@ -51,8 +51,6 @@ export default defineNuxtConfig({
       // Surchargé automatiquement par NUXT_PUBLIC_API_BASE_URL
       //apiBaseUrl: 'http://localhost:3000/api/v1',
       apiBaseUrl: 'https://api.dropone.pro/api/v1',
-      googleClientId:
-        '880526404169-0sopgh9eaqsn67i47bpbooo0a5la9s9i.apps.googleusercontent.com',
     },
   },
 })

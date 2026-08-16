@@ -83,7 +83,9 @@ const { user, displayName, logout, hasPermission } = useAuth()
 .layout-admin {
   display: grid;
   grid-template-columns: 240px 1fr;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background:
     radial-gradient(ellipse 70% 45% at 100% 0%, var(--do-blue-glow), transparent 55%),
     var(--do-surface-soft);
@@ -97,6 +99,9 @@ const { user, displayName, logout, hasPermission } = useAuth()
   justify-content: space-between;
   gap: 24px;
   padding: 24px;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
   background:
     linear-gradient(180deg, rgba(10, 107, 255, 0.22), transparent 42%),
     var(--do-ink);
@@ -191,12 +196,17 @@ nav a.router-link-active {
 }
 
 .content {
+  min-height: 0;
+  overflow-y: auto;
   padding: 32px;
 }
 
 @media (max-width: 768px) {
   .layout-admin {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
   }
 }
 </style>

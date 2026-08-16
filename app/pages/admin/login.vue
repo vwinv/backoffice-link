@@ -3,22 +3,14 @@ definePageMeta({
   layout: false,
 })
 
-type GoogleCredentialResponse = {
-  credential?: string
-}
-
 const auth = useAuth()
 const route = useRoute()
-const config = useRuntimeConfig()
 
 const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const errorMessage = ref('')
 const submitting = ref(false)
-const googleButton = ref<HTMLElement | null>(null)
-
-const googleClientId = String(config.public.googleClientId || '').trim()
 
 function loginErrorMessage(error: unknown) {
   if (error instanceof ApiError) return error.message
@@ -47,78 +39,6 @@ async function onSubmit() {
     submitting.value = false
   }
 }
-
-async function onGoogleCredential(idToken: string) {
-  errorMessage.value = ''
-  submitting.value = true
-  try {
-    await auth.loginWithGoogle(idToken)
-    await redirectAfterLogin()
-  }
-  catch (error: unknown) {
-    errorMessage.value = loginErrorMessage(error)
-  }
-  finally {
-    submitting.value = false
-  }
-}
-
-function renderGoogleButton() {
-  const target = googleButton.value
-  const google = window.google?.accounts?.id
-  if (!target || !google || !googleClientId) return
-
-  target.innerHTML = ''
-  google.initialize({
-    client_id: googleClientId,
-    callback: (response: GoogleCredentialResponse) => {
-      const idToken = response.credential?.trim()
-      if (!idToken) {
-        errorMessage.value = 'Connexion Google interrompue'
-        return
-      }
-      void onGoogleCredential(idToken)
-    },
-    ux_mode: 'popup',
-    auto_select: false,
-  })
-  google.renderButton(target, {
-    theme: 'outline',
-    size: 'large',
-    text: 'continue_with',
-    shape: 'rectangular',
-    logo_alignment: 'left',
-    locale: 'fr',
-    width: Math.max(target.offsetWidth || 356, 280),
-  })
-}
-
-function loadGoogleScript() {
-  if (!googleClientId || !import.meta.client) return
-  if (window.google?.accounts?.id) {
-    renderGoogleButton()
-    return
-  }
-
-  const existing = document.getElementById('google-gsi-client')
-  if (existing) {
-    existing.addEventListener('load', renderGoogleButton, { once: true })
-    return
-  }
-
-  const script = document.createElement('script')
-  script.id = 'google-gsi-client'
-  script.src = 'https://accounts.google.com/gsi/client'
-  script.async = true
-  script.defer = true
-  script.onload = renderGoogleButton
-  document.head.appendChild(script)
-}
-
-onMounted(async () => {
-  await nextTick()
-  loadGoogleScript()
-})
 </script>
 
 <template>
@@ -139,14 +59,6 @@ onMounted(async () => {
       <p class="lead">
         Accédez au backoffice avec un compte administrateur.
       </p>
-
-      <div v-if="googleClientId" class="google-wrap">
-        <div ref="googleButton" class="google-button" />
-      </div>
-
-      <div v-if="googleClientId" class="divider">
-        <span>ou</span>
-      </div>
 
       <form class="form" @submit.prevent="onSubmit">
         <label class="field">
@@ -286,41 +198,6 @@ h1 {
   margin: 0 0 28px;
   color: #5b616e;
   line-height: 1.5;
-}
-
-.google-wrap {
-  margin-bottom: 8px;
-}
-
-.google-button {
-  display: flex;
-  justify-content: center;
-  min-height: 44px;
-}
-
-.google-button :deep(iframe),
-.google-button :deep(div) {
-  width: 100% !important;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 20px 0;
-  color: #8a909c;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: #e5e5ea;
 }
 
 .form {

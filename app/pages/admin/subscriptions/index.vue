@@ -12,7 +12,9 @@ definePageMeta({
 })
 
 const { hasPermission } = useAuth()
-const { getStats, listOffers, listSubscriptions, createSubscription } = useAdminSubscriptions()
+const route = useRoute()
+const router = useRouter()
+const { getStats, listOffers, listSubscriptions, getSubscription, createSubscription, updateSubscription, deleteSubscription } = useAdminSubscriptions()
 const { listClients } = useAdminClients()
 
 const search = ref('')
@@ -30,24 +32,32 @@ const statsLoading = ref(true)
 const error = ref<string | null>(null)
 
 const showCreate = ref(false)
+const showEdit = ref(false)
 const creating = ref(false)
+const saving = ref(false)
 const formError = ref<string | null>(null)
 const clientQuery = ref('')
 const clientResults = ref<AppClient[]>([])
 const clientSearching = ref(false)
 const selectedClient = ref<AppClient | null>(null)
+const editingItem = ref<AdminSubscriptionItem | null>(null)
 
 const form = reactive({
   offerId: '',
   offerPriceId: '',
-  status: 'ACTIVE' as 'ACTIVE' | 'TRIAL',
+  status: 'ACTIVE' as string,
   purchasedSeats: 1,
+  currentPeriodEnd: '',
 })
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 let clientSearchTimer: ReturnType<typeof setTimeout> | null = null
 
 const canCreate = computed(() => hasPermission('subscriptions.create'))
+const canUpdate = computed(() => hasPermission('subscriptions.update') || hasPermission('*'))
+const canDelete = computed(() => hasPermission('subscriptions.delete') || hasPermission('*'))
+const canAct = computed(() => canUpdate.value || canDelete.value)
+const deletingId = ref<string | null>(null)
 
 const selectedOffer = computed(() =>
   offers.value.find(item => item.id === form.offerId) ?? null,
@@ -55,7 +65,31 @@ const selectedOffer = computed(() =>
 
 const selectedPrices = computed(() => selectedOffer.value?.prices ?? [])
 
+const editorPrices = computed(() => {
+  const prices = [...selectedPrices.value]
+  const current = editingItem.value?.price
+  if (current && !prices.some(item => item.id === current.id)) {
+    prices.unshift({
+      id: current.id,
+      billingType: current.billingType,
+      amount: current.amount,
+      pricePerSeat: null,
+      currency: current.currency,
+      label: current.label,
+    })
+  }
+  return prices
+})
+
 const isTeamOffer = computed(() => selectedOffer.value?.audience === 'TEAM')
+
+const assignableOffers = computed(() => offers.value)
+
+function offerOptionLabel(offer: SubscriptionOfferFilter) {
+  const audience = offer.audience === 'TEAM' ? 'Pro' : 'Perso'
+  const hidden = offer.listedInApp === false ? ' · hors app' : ''
+  return `${offer.title} - ${audience}${hidden}`
+}
 
 async function loadStats() {
   statsLoading.value = true
@@ -123,13 +157,25 @@ function resetCreateForm() {
   form.offerPriceId = selectedPrices.value[0]?.id ?? ''
   form.status = 'ACTIVE'
   form.purchasedSeats = Math.max(1, selectedOffer.value?.minSeats ?? 1)
+  form.currentPeriodEnd = ''
   clientQuery.value = ''
   clientResults.value = []
   selectedClient.value = null
   formError.value = null
 }
 
+function toDateInput(iso: string | null | undefined) {
+  if (!iso) return ''
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function openCreate() {
+  editingItem.value = null
   resetCreateForm()
   onOfferChange()
   showCreate.value = true
@@ -139,6 +185,40 @@ function closeCreate() {
   if (creating.value) return
   showCreate.value = false
   formError.value = null
+}
+
+function openEdit(item: AdminSubscriptionItem) {
+  editingItem.value = item
+  form.offerId = item.offer?.id ?? ''
+  form.offerPriceId = item.price?.id ?? ''
+  form.status = item.status
+  form.purchasedSeats = Math.max(1, item.purchasedSeats ?? selectedOffer.value?.minSeats ?? 1)
+  form.currentPeriodEnd = toDateInput(item.currentPeriodEnd)
+  formError.value = null
+  if (!form.offerPriceId && selectedPrices.value[0]) {
+    form.offerPriceId = selectedPrices.value[0].id
+  }
+  showEdit.value = true
+}
+
+async function openEditById(id: string) {
+  try {
+    const item = items.value.find(row => row.id === id) ?? await getSubscription(id)
+    openEdit(item)
+  }
+  catch (err: unknown) {
+    error.value = err instanceof ApiError ? err.message : 'Abonnement introuvable'
+  }
+}
+
+function closeEdit() {
+  if (saving.value) return
+  showEdit.value = false
+  editingItem.value = null
+  formError.value = null
+  if (route.query.edit) {
+    router.replace({ query: { ...route.query, edit: undefined } })
+  }
 }
 
 function onOfferChange() {
@@ -191,12 +271,17 @@ function priceLabel(price: SubscriptionOfferPrice) {
         ? 'À vie'
         : 'Mensuel'
   const amount = new Intl.NumberFormat('fr-FR').format(price.amount)
-  return `${price.label || period} - ${amount} ${price.currency}`
+  const inactive = price.isActive === false ? ' (inactif)' : ''
+  return `${price.label || period} - ${amount} ${price.currency}${inactive}`
 }
 
 async function onCreate() {
-  if (!selectedClient.value || !form.offerId || !form.offerPriceId) {
-    formError.value = 'Choisissez un client, une offre et un tarif.'
+  if (!selectedClient.value || !form.offerId) {
+    formError.value = 'Choisissez un client et une offre.'
+    return
+  }
+  if (selectedPrices.value.length > 0 && !form.offerPriceId) {
+    formError.value = 'Choisissez un tarif.'
     return
   }
   creating.value = true
@@ -205,8 +290,8 @@ async function onCreate() {
     await createSubscription({
       userId: selectedClient.value.id,
       offerId: form.offerId,
-      offerPriceId: form.offerPriceId,
-      status: form.status,
+      offerPriceId: form.offerPriceId || undefined,
+      status: form.status === 'TRIAL' ? 'TRIAL' : 'ACTIVE',
       purchasedSeats: isTeamOffer.value ? form.purchasedSeats : undefined,
     })
     showCreate.value = false
@@ -218,6 +303,65 @@ async function onCreate() {
   }
   finally {
     creating.value = false
+  }
+}
+
+async function onUpdate() {
+  if (!editingItem.value || !form.offerId) {
+    formError.value = 'Choisissez une offre.'
+    return
+  }
+  if (editorPrices.value.length > 0 && !form.offerPriceId) {
+    formError.value = 'Choisissez un tarif.'
+    return
+  }
+  saving.value = true
+  formError.value = null
+  try {
+    await updateSubscription(editingItem.value.id, {
+      offerId: form.offerId,
+      offerPriceId: form.offerPriceId || undefined,
+      status: form.status,
+      purchasedSeats: isTeamOffer.value ? form.purchasedSeats : undefined,
+      currentPeriodEnd: form.currentPeriodEnd
+        ? new Date(`${form.currentPeriodEnd}T12:00:00`).toISOString()
+        : undefined,
+    })
+    showEdit.value = false
+    editingItem.value = null
+    if (route.query.edit) {
+      await router.replace({ query: { ...route.query, edit: undefined } })
+    }
+    await Promise.all([loadStats(), loadList()])
+  }
+  catch (err: unknown) {
+    formError.value = err instanceof ApiError ? err.message : 'Modification impossible'
+  }
+  finally {
+    saving.value = false
+  }
+}
+
+async function onDelete(item: AdminSubscriptionItem) {
+  const who = subscriberLabel(item)
+  const offer = item.offer?.title || item.plan?.name || 'cet abonnement'
+  if (!confirm(`Supprimer l’abonnement « ${offer} » de ${who} ?`)) return
+
+  deletingId.value = item.id
+  error.value = null
+  try {
+    await deleteSubscription(item.id)
+    if (editingItem.value?.id === item.id) {
+      showEdit.value = false
+      editingItem.value = null
+    }
+    await Promise.all([loadStats(), loadList()])
+  }
+  catch (err: unknown) {
+    error.value = err instanceof ApiError ? err.message : 'Suppression impossible'
+  }
+  finally {
+    deletingId.value = null
   }
 }
 
@@ -310,6 +454,11 @@ const overviewCards = computed(() => {
 })
 
 await Promise.all([loadStats(), loadOffers(), loadList()])
+
+const editQuery = String(route.query.edit || '')
+if (editQuery && canUpdate.value) {
+  await openEditById(editQuery)
+}
 </script>
 
 <template>
@@ -389,18 +538,17 @@ await Promise.all([loadStats(), loadOffers(), loadList()])
                 <select v-model="form.offerId" required @change="onOfferChange">
                   <option value="" disabled>Choisir une offre</option>
                   <option
-                    v-for="offer in offers.filter(item => (item.prices?.length ?? 0) > 0)"
+                    v-for="offer in assignableOffers"
                     :key="offer.id"
                     :value="offer.id"
                   >
-                    {{ offer.title }}
-                    {{ offer.audience === 'TEAM' ? '- Pro' : '- Perso' }}
+                    {{ offerOptionLabel(offer) }}
                   </option>
                 </select>
               </label>
               <label>
                 <span>Tarif</span>
-                <select v-model="form.offerPriceId" required :disabled="!selectedPrices.length">
+                <select v-model="form.offerPriceId" :required="selectedPrices.length > 0" :disabled="!selectedPrices.length">
                   <option
                     v-for="price in selectedPrices"
                     :key="price.id"
@@ -439,6 +587,106 @@ await Promise.all([loadStats(), loadOffers(), loadList()])
               </button>
               <button class="primary" type="submit" :disabled="creating || !selectedClient">
                 {{ creating ? 'Création…' : 'Créer l’abonnement' }}
+              </button>
+            </footer>
+          </form>
+        </div>
+      </div>
+
+      <div
+        v-if="showEdit"
+        class="modal-backdrop"
+        @click.self="closeEdit"
+      >
+        <div
+          class="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-sub-title"
+        >
+          <header class="modal-head">
+            <h2 id="edit-sub-title">Modifier l’abonnement</h2>
+            <button type="button" class="modal-close" aria-label="Fermer" @click="closeEdit">×</button>
+          </header>
+          <form class="modal-body" @submit.prevent="onUpdate">
+            <p v-if="formError" class="banner-error" role="alert">{{ formError }}</p>
+
+            <div v-if="editingItem" class="selected-client">
+              <strong>{{ subscriberLabel(editingItem) }}</strong>
+              <small>{{ subscriberSub(editingItem) }}</small>
+            </div>
+
+            <div class="create-grid">
+              <label>
+                <span>Offre</span>
+                <select v-model="form.offerId" required @change="onOfferChange">
+                  <option value="" disabled>Choisir une offre</option>
+                  <option
+                    v-for="offer in assignableOffers"
+                    :key="offer.id"
+                    :value="offer.id"
+                  >
+                    {{ offerOptionLabel(offer) }}
+                  </option>
+                </select>
+              </label>
+              <label>
+                <span>Tarif</span>
+                <select v-model="form.offerPriceId" :required="editorPrices.length > 0" :disabled="!editorPrices.length">
+                  <option
+                    v-for="price in editorPrices"
+                    :key="price.id"
+                    :value="price.id"
+                  >
+                    {{ priceLabel(price) }}
+                  </option>
+                </select>
+              </label>
+              <label>
+                <span>Statut</span>
+                <select v-model="form.status">
+                  <option value="ACTIVE">Actif</option>
+                  <option value="TRIAL">Essai</option>
+                  <option value="PAST_DUE">Impayé</option>
+                  <option value="CANCELLED">Annulé</option>
+                  <option value="EXPIRED">Expiré</option>
+                </select>
+              </label>
+              <label>
+                <span>Fin de période</span>
+                <input v-model="form.currentPeriodEnd" type="date">
+              </label>
+              <label v-if="isTeamOffer">
+                <span>Sièges</span>
+                <input
+                  v-model.number="form.purchasedSeats"
+                  type="number"
+                  :min="selectedOffer?.minSeats || 1"
+                  required
+                >
+              </label>
+            </div>
+
+            <p class="hint">
+              Si vous passez cet abonnement en actif, les autres abonnements
+              en cours du client seront annulés.
+            </p>
+
+            <footer class="modal-actions">
+              <button
+                v-if="canDelete && editingItem"
+                type="button"
+                class="btn-ghost danger"
+                :disabled="saving || deletingId === editingItem.id"
+                @click="onDelete(editingItem)"
+              >
+                {{ deletingId === editingItem.id ? 'Suppression…' : 'Supprimer' }}
+              </button>
+              <button type="button" class="btn-ghost" :disabled="saving" @click="closeEdit">
+                Annuler
+              </button>
+              <button class="primary" type="submit" :disabled="saving">
+                {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
               </button>
             </footer>
           </form>
@@ -516,7 +764,7 @@ await Promise.all([loadStats(), loadOffers(), loadList()])
           :key="offer.id"
           :value="offer.id"
         >
-          {{ offer.title }}
+          {{ offerOptionLabel(offer) }}
         </option>
       </select>
     </div>
@@ -532,14 +780,15 @@ await Promise.all([loadStats(), loadOffers(), loadList()])
             <th>Prix</th>
             <th>Fin</th>
             <th>Créé</th>
+            <th v-if="canAct"></th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="loading && items.length === 0">
-            <td colspan="7" class="empty">Chargement…</td>
+            <td :colspan="canAct ? 8 : 7" class="empty">Chargement…</td>
           </tr>
           <tr v-else-if="items.length === 0">
-            <td colspan="7" class="empty">Aucun abonnement trouvé.</td>
+            <td :colspan="canAct ? 8 : 7" class="empty">Aucun abonnement trouvé.</td>
           </tr>
           <tr v-for="item in items" :key="item.id">
             <td>
@@ -586,6 +835,25 @@ await Promise.all([loadStats(), loadOffers(), loadList()])
             </td>
             <td>{{ formatDate(item.currentPeriodEnd) }}</td>
             <td>{{ formatDate(item.createdAt) }}</td>
+            <td v-if="canAct" class="actions-cell">
+              <button
+                v-if="canUpdate"
+                type="button"
+                class="btn-ghost"
+                @click="openEdit(item)"
+              >
+                Modifier
+              </button>
+              <button
+                v-if="canDelete"
+                type="button"
+                class="btn-ghost danger"
+                :disabled="deletingId === item.id"
+                @click="onDelete(item)"
+              >
+                {{ deletingId === item.id ? '…' : 'Supprimer' }}
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -630,6 +898,7 @@ await Promise.all([loadStats(), loadOffers(), loadList()])
   cursor: pointer; font-size: 0.875rem;
 }
 .btn-ghost { border: 1.5px solid var(--do-line); background: #fff; }
+.btn-ghost.danger { color: #b42318; border-color: #f3c1c1; background: #fff8f8; }
 .primary { border: 0; background: var(--do-blue); color: #fff; }
 .primary:disabled, .btn-ghost:disabled { opacity: 0.45; cursor: not-allowed; }
 .eyebrow {
@@ -734,6 +1003,7 @@ th {
 }
 .pager button:disabled { opacity: 0.45; cursor: not-allowed; }
 .muted { margin: 0; color: var(--do-muted); }
+.actions-cell { text-align: right; white-space: nowrap; }
 
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 80;
@@ -763,6 +1033,7 @@ th {
 .modal-body { padding: 18px; display: grid; gap: 14px; }
 .create-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
+.modal-actions .danger { margin-right: auto; }
 label { display: grid; gap: 6px; font-size: 0.85rem; font-weight: 600; }
 label.full { grid-column: 1 / -1; }
 .hint { margin: 0; color: var(--do-muted); font-size: 0.8rem; font-weight: 500; }

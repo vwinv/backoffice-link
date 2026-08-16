@@ -8,11 +8,20 @@ definePageMeta({
 const route = useRoute()
 const { hasPermission } = useAuth()
 const { getClient, updateClient } = useAdminClients()
+const { deleteSubscription } = useAdminSubscriptions()
+
+const canUpdateSubscription = computed(
+  () => hasPermission('subscriptions.update') || hasPermission('*'),
+)
+const canDeleteSubscription = computed(
+  () => hasPermission('subscriptions.delete') || hasPermission('*'),
+)
 
 const detail = ref<AppClientDetail | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 const busy = ref(false)
+const deletingSubId = ref<string | null>(null)
 const savedFlash = ref(false)
 
 const clientId = computed(() => String(route.params.id || ''))
@@ -125,6 +134,29 @@ async function toggleActive() {
   }
   finally {
     busy.value = false
+  }
+}
+
+async function onDeleteSubscription(sub: {
+  id: string
+  offerTitle?: string | null
+  offer?: { title: string } | null
+  plan?: { name: string } | null
+}) {
+  const title = sub.offer?.title || sub.plan?.name || sub.offerTitle || 'cet abonnement'
+  if (!confirm(`Supprimer l’abonnement « ${title} » ?`)) return
+
+  deletingSubId.value = sub.id
+  error.value = null
+  try {
+    await deleteSubscription(sub.id)
+    await load()
+  }
+  catch (err: unknown) {
+    error.value = err instanceof ApiError ? err.message : 'Suppression impossible'
+  }
+  finally {
+    deletingSubId.value = null
   }
 }
 
@@ -278,6 +310,24 @@ await load()
                 - fin le {{ formatShortDate(detail.subscription.currentPeriodEnd) }}
               </template>
             </p>
+            <div v-if="canUpdateSubscription || canDeleteSubscription" class="sub-actions">
+              <NuxtLink
+                v-if="canUpdateSubscription"
+                class="ghost sub-edit"
+                :to="`/admin/subscriptions?edit=${detail.subscription.id}`"
+              >
+                Modifier l’abonnement
+              </NuxtLink>
+              <button
+                v-if="canDeleteSubscription"
+                type="button"
+                class="ghost danger"
+                :disabled="deletingSubId === detail.subscription.id"
+                @click="onDeleteSubscription(detail.subscription)"
+              >
+                {{ deletingSubId === detail.subscription.id ? 'Suppression…' : 'Supprimer' }}
+              </button>
+            </div>
           </div>
           <div v-else class="sub-empty">
             <strong>Offre gratuite</strong>
@@ -297,6 +347,24 @@ await load()
                   {{ statusLabel(sub.status) }} - {{ billingLabel(sub.billingPeriod) }}
                   - {{ formatShortDate(sub.createdAt) }}
                 </small>
+              </div>
+              <div class="row-actions">
+                <NuxtLink
+                  v-if="canUpdateSubscription"
+                  class="ghost"
+                  :to="`/admin/subscriptions?edit=${sub.id}`"
+                >
+                  Modifier
+                </NuxtLink>
+                <button
+                  v-if="canDeleteSubscription"
+                  type="button"
+                  class="ghost danger"
+                  :disabled="deletingSubId === sub.id"
+                  @click="onDeleteSubscription(sub)"
+                >
+                  {{ deletingSubId === sub.id ? '…' : 'Supprimer' }}
+                </button>
               </div>
             </article>
           </div>
@@ -538,6 +606,10 @@ h1 {
   cursor: pointer;
   border: 1.5px solid var(--do-line);
   background: #fff;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
 }
 .ghost.danger {
   color: #b42318;
@@ -666,6 +738,15 @@ h1 {
   color: var(--do-muted);
   font-size: 0.9rem;
 }
+.sub-edit { margin-top: 0; display: inline-flex; text-decoration: none; }
+.sub-actions, .row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+.list-row .row-actions { margin-top: 0; }
 .sub-active p { color: #9a6700; }
 .sub-empty strong, .sub-active strong { display: block; }
 

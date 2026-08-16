@@ -86,23 +86,6 @@ export function useAuth() {
     }
   }
 
-  async function loginWithGoogle(idToken: string) {
-    loading.value = true
-    try {
-      const response = await apiFetch<AuthResponse>('/auth/admin/oauth/google', {
-        method: 'POST',
-        body: { idToken },
-      })
-      assertBackofficeAccess(response.user)
-      setSession(response.accessToken, response.user)
-      return response.user
-    }
-    finally {
-      loading.value = false
-      ready.value = true
-    }
-  }
-
   async function fetchMe() {
     if (!token.value) {
       user.value = null
@@ -151,7 +134,6 @@ export function useAuth() {
     displayName,
     hasPermission,
     login,
-    loginWithGoogle,
     fetchMe,
     ensureSession,
     logout,

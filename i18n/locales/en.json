@@ -86,7 +86,8 @@
         "personalCard": "1 personal card",
         "teamSeats": "From {n} users",
         "teamLimit": "Up to {n} members",
-        "qr": "Share via QR Code",
+        "enterpriseDashboard": "Company dashboard",
+        "share": "QR Code, link, WhatsApp, message, AirDrop",
         "sharesUnlimited": "Unlimited sharing",
         "shares": "Up to {n} shares",
         "customize": "Card customization",
@@ -96,7 +97,7 @@
         "social": "Social links",
         "portfolio": "Portfolio",
         "aiUnlimited": "Unlimited AI scans",
-        "aiScans": "{n} AI scans"
+        "aiScans": "{n} AI scans / month"
       }
     },
     "cta": {

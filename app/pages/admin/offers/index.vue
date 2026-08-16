@@ -591,7 +591,7 @@ await load()
                 >
               </label>
               <label>
-                <span>Max scans IA (−1 = ∞)</span>
+                <span>Max scans IA / mois (−1 = ∞)</span>
                 <input
                   v-model.number="offerForm.maxAiScans"
                   type="number"

@@ -108,12 +108,10 @@ function displayUnit(price: PublicOfferPrice | null) {
   return t(seat ? 'landing.pricing.unit.monthlySeat' : 'landing.pricing.unit.monthly')
 }
 
-function planTone(
-  offer: PublicOffer,
-  price: PublicOfferPrice | null,
-): LandingPlan['tone'] {
-  if (!price || price.priceAmount <= 0) return 'free'
-  if (offer.audience === 'TEAM') return 'pro'
+function planTone(index: number, total: number): LandingPlan['tone'] {
+  if (total <= 1) return 'premium'
+  if (index === 0) return 'free'
+  if (total >= 3 && index === total - 1) return 'pro'
   return 'premium'
 }
 
@@ -127,12 +125,13 @@ function offerFeatures(offer: PublicOffer) {
     else {
       features.push(t('landing.pricing.features.teamSeats', { n: Math.max(offer.minSeats, 1) }))
     }
+    features.push(t('landing.pricing.features.enterpriseDashboard'))
   }
   else {
     features.push(t('landing.pricing.features.personalCard'))
   }
 
-  features.push(t('landing.pricing.features.qr'))
+  features.push(t('landing.pricing.features.share'))
 
   if (offer.maxShares < 0) {
     features.push(t('landing.pricing.features.sharesUnlimited'))
@@ -171,7 +170,7 @@ function offerFeatures(offer: PublicOffer) {
 
 const plans = computed<LandingPlan[]>(() => {
   const offers = data.value?.items ?? []
-  return offers.map((offer) => {
+  return offers.map((offer, index) => {
     const price = pickPrice(offer)
     const isFree = !price || price.priceAmount <= 0
     return {
@@ -185,7 +184,7 @@ const plans = computed<LandingPlan[]>(() => {
       cta: isFree
         ? t('landing.pricing.ctaFree')
         : t('landing.pricing.cta'),
-      tone: planTone(offer, price),
+      tone: planTone(index, offers.length),
       features: offerFeatures(offer),
     }
   })
@@ -384,6 +383,7 @@ const isEmpty = computed(() => !pending.value && !loadFailed.value && plans.valu
   position: relative;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
   padding: 18px 16px 34px;
   border-radius: 20px;
   background: #fff;
@@ -447,22 +447,22 @@ const isEmpty = computed(() => !pending.value && !loadFailed.value && plans.valu
 }
 
 h3 {
-  margin: 12px 0 0;
+  margin: 10px 0 0;
   font-size: 1.05rem;
-  line-height: 1.25;
+  line-height: 1.2;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 
 .subtitle {
-  margin: 4px 0 0;
+  margin: 2px 0 0;
   color: var(--do-muted);
   font-size: 0.82rem;
-  line-height: 1.35;
+  line-height: 1.3;
 }
 
 .price {
-  margin: 14px 0 0;
+  margin: 10px 0 0;
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
@@ -483,12 +483,12 @@ h3 {
 }
 
 ul {
-  margin: 14px 0 0;
+  margin: 10px 0 0;
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 8px;
-  flex: 1;
+  gap: 6px;
+  flex: 0 0 auto;
 }
 
 li {
@@ -496,7 +496,7 @@ li {
   align-items: flex-start;
   gap: 8px;
   color: var(--do-muted);
-  line-height: 1.35;
+  line-height: 1.3;
   font-size: 0.8rem;
 }
 

@@ -5,6 +5,7 @@ export type SubscriptionOfferPrice = {
   pricePerSeat: number | null
   currency: string
   label: string | null
+  isActive?: boolean
 }
 
 export type SubscriptionOfferFilter = {
@@ -23,6 +24,7 @@ export type AdminSubscriptionItem = {
   billingPeriod: string
   currentPeriodEnd: string | null
   cancelledAt: string | null
+  purchasedSeats: number | null
   createdAt: string
   updatedAt: string
   paymentProvider: 'stripe' | 'paydunya' | null
@@ -144,7 +146,7 @@ export function useAdminSubscriptions() {
   async function createSubscription(body: {
     userId: string
     offerId: string
-    offerPriceId: string
+    offerPriceId?: string
     status?: 'ACTIVE' | 'TRIAL'
     teamId?: string
     purchasedSeats?: number
@@ -157,10 +159,44 @@ export function useAdminSubscriptions() {
     })
   }
 
+  async function getSubscription(id: string) {
+    return apiFetch<AdminSubscriptionItem>(`/admin/subscriptions/${id}`, {
+      token: token.value,
+    })
+  }
+
+  async function updateSubscription(
+    id: string,
+    body: {
+      offerId?: string
+      offerPriceId?: string
+      status?: string
+      teamId?: string
+      purchasedSeats?: number
+      currentPeriodEnd?: string
+    },
+  ) {
+    return apiFetch<AdminSubscriptionItem>(`/admin/subscriptions/${id}`, {
+      method: 'PATCH',
+      token: token.value,
+      body,
+    })
+  }
+
+  async function deleteSubscription(id: string) {
+    return apiFetch<{ deleted: boolean, id: string }>(`/admin/subscriptions/${id}`, {
+      method: 'DELETE',
+      token: token.value,
+    })
+  }
+
   return {
     getStats,
     listOffers,
     listSubscriptions,
+    getSubscription,
     createSubscription,
+    updateSubscription,
+    deleteSubscription,
   }
 }
