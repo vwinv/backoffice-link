@@ -43,7 +43,7 @@
           </a>
           <a
             class="store"
-            href="https://play.google.com"
+            href="https://play.google.com/store/apps/details?id=com.mega.dropone"
             target="_blank"
             rel="noopener noreferrer"
             :aria-label="$t('landing.cta.playStore')"
