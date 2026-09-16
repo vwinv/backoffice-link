@@ -6,8 +6,9 @@ definePageMeta({
 })
 
 const route = useRoute()
-const { hasPermission } = useAuth()
-const { getClient, updateClient } = useAdminClients()
+const router = useRouter()
+const { hasPermission, isSuperAdmin } = useAuth()
+const { getClient, updateClient, deleteClient } = useAdminClients()
 const { deleteSubscription } = useAdminSubscriptions()
 
 const canUpdateSubscription = computed(
@@ -16,11 +17,13 @@ const canUpdateSubscription = computed(
 const canDeleteSubscription = computed(
   () => hasPermission('subscriptions.delete') || hasPermission('*'),
 )
+const canDeleteClient = computed(() => isSuperAdmin.value)
 
 const detail = ref<AppClientDetail | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 const busy = ref(false)
+const deleting = ref(false)
 const deletingSubId = ref<string | null>(null)
 const savedFlash = ref(false)
 
@@ -137,6 +140,28 @@ async function toggleActive() {
   }
 }
 
+async function onDeleteClient() {
+  if (!detail.value || !canDeleteClient.value) return
+  const name = fullName(detail.value)
+  const confirmed = confirm(
+    `Supprimer définitivement le client « ${name} » (${detail.value.email}) ?\n\nCette action est irréversible et supprimera aussi ses cartes, équipes possédées et données associées.`,
+  )
+  if (!confirmed) return
+
+  deleting.value = true
+  error.value = null
+  try {
+    await deleteClient(detail.value.id)
+    await router.push('/admin/clients')
+  }
+  catch (err: unknown) {
+    error.value = err instanceof ApiError ? err.message : 'Suppression impossible'
+  }
+  finally {
+    deleting.value = false
+  }
+}
+
 async function onDeleteSubscription(sub: {
   id: string
   offerTitle?: string | null
@@ -212,10 +237,19 @@ await load()
             type="button"
             class="ghost"
             :class="{ danger: detail.isActive }"
-            :disabled="busy"
+            :disabled="busy || deleting"
             @click="toggleActive"
           >
             {{ detail.isActive ? 'Désactiver' : 'Réactiver' }}
+          </button>
+          <button
+            v-if="canDeleteClient"
+            type="button"
+            class="ghost danger"
+            :disabled="busy || deleting"
+            @click="onDeleteClient"
+          >
+            {{ deleting ? 'Suppression…' : 'Supprimer le client' }}
           </button>
         </div>
       </header>
@@ -596,6 +630,13 @@ h1 {
 .badge-ok { background: #e8f8ef; color: #1b7a45; }
 .badge-saved { background: #e8f8ef; color: #1b7a45; }
 .badge-kind { background: var(--do-blue-soft); color: var(--do-blue); }
+
+.hero-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
 
 .ghost {
   min-height: 34px;

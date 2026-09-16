@@ -6,7 +6,7 @@ definePageMeta({
   layout: 'admin',
 })
 
-const { user: currentUser, hasPermission } = useAuth()
+const { user: currentUser, hasPermission, isSuperAdmin } = useAuth()
 const { listUsers, createUser, updateUser } = useAdminUsers()
 const { listRoles } = useAdminRoles()
 
@@ -173,7 +173,7 @@ await Promise.all([loadUsers(), loadRoles()])
       </div>
       <div class="hero-actions">
         <button
-          v-if="hasPermission('backoffice_users.create')"
+          v-if="isSuperAdmin"
           type="button"
           class="primary"
           @click="openCreate"

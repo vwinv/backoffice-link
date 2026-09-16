@@ -49,8 +49,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       // Surchargé automatiquement par NUXT_PUBLIC_API_BASE_URL
-      //apiBaseUrl: 'http://localhost:3000/api/v1',
-      apiBaseUrl: 'https://api.dropone.pro/api/v1',
+      apiBaseUrl: 'http://localhost:3000/api/v1',
+      //apiBaseUrl: 'https://api.dropone.pro/api/v1',
     },
   },
 })

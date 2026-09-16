@@ -94,10 +94,19 @@ export function useAdminUsers() {
     })
   }
 
+  async function resetPassword(id: string, password: string) {
+    return apiFetch<BackofficeUser>(`/admin/users/${id}/reset-password`, {
+      method: 'POST',
+      token: token.value,
+      body: { password },
+    })
+  }
+
   return {
     listUsers,
     getUser,
     createUser,
     updateUser,
+    resetPassword,
   }
 }

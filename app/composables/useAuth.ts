@@ -24,7 +24,8 @@ export function useAuth() {
   const token = useCookie<string | null>(TOKEN_COOKIE, {
     sameSite: 'lax',
     secure: !import.meta.dev,
-    maxAge: 60 * 60 * 24 * 7,
+    // Aligné sur JWT 24h côté API (httpOnly nécessiterait un BFF).
+    maxAge: 60 * 60 * 24,
   })
   const user = useState<AdminUser | null>('admin-user', () => null)
   const ready = useState('admin-auth-ready', () => false)
@@ -41,6 +42,12 @@ export function useAuth() {
     if (!user.value) return ''
     const name = `${user.value.firstName} ${user.value.lastName}`.trim()
     return name || user.value.email
+  })
+
+  const isSuperAdmin = computed(() => {
+    if (!user.value) return false
+    if (user.value.adminRole?.name === 'Super Admin') return true
+    return (user.value.permissions ?? []).includes('*')
   })
 
   function hasPermission(permission: string) {
@@ -119,6 +126,18 @@ export function useAuth() {
   }
 
   async function logout() {
+    const currentToken = token.value
+    try {
+      if (currentToken) {
+        await apiFetch('/auth/logout', {
+          method: 'POST',
+          token: currentToken,
+        })
+      }
+    }
+    catch {
+      // On efface quand même la session locale.
+    }
     clearSession()
     ready.value = true
     await navigateTo('/admin/login')
@@ -132,6 +151,7 @@ export function useAuth() {
     isAuthenticated,
     permissions,
     displayName,
+    isSuperAdmin,
     hasPermission,
     login,
     fetchMe,

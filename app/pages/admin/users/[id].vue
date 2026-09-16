@@ -7,8 +7,8 @@ definePageMeta({
 })
 
 const route = useRoute()
-const { user: currentUser, hasPermission } = useAuth()
-const { getUser, updateUser } = useAdminUsers()
+const { user: currentUser, hasPermission, isSuperAdmin } = useAuth()
+const { getUser, updateUser, resetPassword } = useAdminUsers()
 const { listRoles, listPermissions } = useAdminRoles()
 
 const detail = ref<BackofficeUser | null>(null)
@@ -19,6 +19,13 @@ const error = ref<string | null>(null)
 const busy = ref(false)
 const savedFlash = ref(false)
 const selectedRoleId = ref('')
+const passwordForm = reactive({
+  password: '',
+  confirm: '',
+})
+const passwordError = ref<string | null>(null)
+const passwordBusy = ref(false)
+const passwordFlash = ref(false)
 
 const userId = computed(() => String(route.params.id || ''))
 const isSelf = computed(() => detail.value?.id === currentUser.value?.id)
@@ -159,6 +166,40 @@ async function toggleActive() {
   }
 }
 
+async function onResetPassword() {
+  if (!detail.value || !isSuperAdmin.value) return
+  passwordError.value = null
+
+  const password = passwordForm.password.trim()
+  if (password.length < 6) {
+    passwordError.value = 'Le mot de passe doit contenir au moins 6 caractères'
+    return
+  }
+  if (password !== passwordForm.confirm) {
+    passwordError.value = 'Les mots de passe ne correspondent pas'
+    return
+  }
+
+  passwordBusy.value = true
+  try {
+    await resetPassword(detail.value.id, password)
+    passwordForm.password = ''
+    passwordForm.confirm = ''
+    passwordFlash.value = true
+    setTimeout(() => {
+      passwordFlash.value = false
+    }, 2200)
+  }
+  catch (err: unknown) {
+    passwordError.value = err instanceof ApiError
+      ? err.message
+      : 'Impossible de mettre à jour le mot de passe'
+  }
+  finally {
+    passwordBusy.value = false
+  }
+}
+
 await load()
 </script>
 
@@ -275,6 +316,55 @@ await load()
         <p v-else-if="isSelf" class="role-hint warn">
           Vous ne pouvez pas modifier votre propre rôle.
         </p>
+      </section>
+
+      <section v-if="isSuperAdmin" class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>
+              {{ isSelf ? 'Changer mon mot de passe' : 'Réinitialiser le mot de passe' }}
+            </h2>
+            <p class="panel-lead">
+              {{ isSelf
+                ? 'Mettez à jour le mot de passe de votre compte Super Admin.'
+                : 'Définissez un nouveau mot de passe pour cet utilisateur backoffice.' }}
+            </p>
+          </div>
+          <span v-if="passwordFlash" class="badge badge-saved">Mot de passe mis à jour</span>
+        </div>
+
+        <form class="password-form" @submit.prevent="onResetPassword">
+          <p v-if="passwordError" class="banner-error" role="alert">{{ passwordError }}</p>
+          <div class="password-grid">
+            <label class="field">
+              <span>Nouveau mot de passe</span>
+              <input
+                v-model="passwordForm.password"
+                type="password"
+                required
+                minlength="6"
+                autocomplete="new-password"
+              >
+            </label>
+            <label class="field">
+              <span>Confirmer</span>
+              <input
+                v-model="passwordForm.confirm"
+                type="password"
+                required
+                minlength="6"
+                autocomplete="new-password"
+              >
+            </label>
+          </div>
+          <div class="password-actions">
+            <button class="primary" type="submit" :disabled="passwordBusy">
+              {{ passwordBusy
+                ? 'Enregistrement…'
+                : (isSelf ? 'Changer le mot de passe' : 'Réinitialiser') }}
+            </button>
+          </div>
+        </form>
       </section>
 
       <section class="panel">
@@ -567,6 +657,23 @@ select {
   color: #9a6700;
 }
 
+.password-form { display: grid; gap: 14px; }
+.password-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.password-actions { display: flex; justify-content: flex-start; }
+input {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1.5px solid var(--do-line);
+  border-radius: 10px;
+  font: inherit;
+  background: #fff;
+  width: 100%;
+}
+
 .perm-groups {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -646,6 +753,7 @@ select {
   .meta-item:nth-child(2n) { border-right: 0; }
   .meta-item:nth-child(-n+2) { border-bottom: 1px solid var(--do-line); }
   .hero-main { align-items: flex-start; }
+  .password-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 520px) {
   .meta-grid { grid-template-columns: 1fr; }

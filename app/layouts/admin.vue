@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { user, displayName, logout, hasPermission } = useAuth()
+const { user, displayName, logout, hasPermission, isSuperAdmin } = useAuth()
 </script>
 
 <template>
@@ -65,8 +65,19 @@ const { user, displayName, logout, hasPermission } = useAuth()
 
       <div class="sidebar-bottom">
         <div v-if="user" class="user">
-          <span class="user-name">{{ displayName }}</span>
-          <span class="user-email">{{ user.email }}</span>
+          <NuxtLink
+            v-if="isSuperAdmin"
+            class="user-link"
+            :to="`/admin/users/${user.id}`"
+          >
+            <span class="user-name">{{ displayName }}</span>
+            <span class="user-email">{{ user.email }}</span>
+            <span class="user-hint">Mon compte / mot de passe</span>
+          </NuxtLink>
+          <template v-else>
+            <span class="user-name">{{ displayName }}</span>
+            <span class="user-email">{{ user.email }}</span>
+          </template>
         </div>
         <button type="button" class="logout" @click="logout()">
           Déconnexion
@@ -177,6 +188,29 @@ nav a.router-link-active {
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.55);
   word-break: break-all;
+}
+
+.user-link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 10px;
+  padding: 8px;
+  margin: -8px;
+  transition: background 0.15s ease;
+}
+
+.user-link:hover {
+  background: rgba(10, 107, 255, 0.18);
+}
+
+.user-hint {
+  margin-top: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(125, 186, 255, 0.95);
 }
 
 .logout {

@@ -132,9 +132,20 @@ export function useAdminClients() {
     })
   }
 
+  async function deleteClient(id: string) {
+    return apiFetch<{ message: string, id: string, email: string }>(
+      `/admin/clients/${id}`,
+      {
+        method: 'DELETE',
+        token: token.value,
+      },
+    )
+  }
+
   return {
     listClients,
     getClient,
     updateClient,
+    deleteClient,
   }
 }
