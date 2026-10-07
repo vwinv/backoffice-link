@@ -60,6 +60,12 @@ const { user, displayName, logout, hasPermission, isSuperAdmin } = useAuth()
           >
             Support
           </NuxtLink>
+          <NuxtLink
+            v-if="hasPermission('app_update.view') || hasPermission('*')"
+            to="/admin/app-update"
+          >
+            Mise à jour
+          </NuxtLink>
         </nav>
       </div>
 
