@@ -5,7 +5,21 @@ useSeoMeta({
     'Politique de confidentialité de DropOne - comment MEGA - SN collecte, utilise et protège vos données personnelles.',
 })
 
-const sections = [
+type PolicySubsection = {
+  title: string
+  paragraphs?: string[]
+  bullets?: string[]
+}
+
+type PolicySection = {
+  title: string
+  paragraphs: string[]
+  bullets?: string[]
+  subsections?: PolicySubsection[]
+  closing?: string[]
+}
+
+const sections: PolicySection[] = [
   {
     title: '1. Introduction',
     paragraphs: [
@@ -81,7 +95,7 @@ const sections = [
     bullets: [
       'créer et gérer votre compte ;',
       'générer votre carte de visite numérique ;',
-      'partager votre profil via QR Code, NFC ou lien ;',
+      'partager votre profil via QR Code ou lien ;',
       'gérer les équipes et entreprises ;',
       'permettre l’authentification sécurisée ;',
       'envoyer des notifications importantes ;',
@@ -166,7 +180,7 @@ const sections = [
       'E-mail : contact@mega-sn.com',
     ],
   },
-] as const
+]
 
 function linkify(text: string) {
   if (text.startsWith('Site web : https://')) {

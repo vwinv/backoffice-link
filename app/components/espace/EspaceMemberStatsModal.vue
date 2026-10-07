@@ -51,7 +51,6 @@ const SOURCE_COLORS: Record<string, string> = {
   qr: '#0a6bff',
   share: '#34C759',
   link: '#FF9500',
-  nfc: '#AF52DE',
   app: '#5AC8FA',
   other: '#5b616e',
 }
@@ -60,7 +59,6 @@ const sourceLabels: Record<string, string> = {
   qr: 'QR code',
   share: 'Partage',
   link: 'Lien',
-  nfc: 'NFC',
   app: 'App',
   other: 'Autre',
 }
@@ -212,13 +210,17 @@ const comparisonBarOptions = {
 const sourcesDoughnutData = computed(() => {
   const sources = detail.value?.analytics.sources ?? []
   return {
-    labels: sources.map(source => sourceLabels[source.key] || source.key),
+    labels: sources.map((source) => {
+      const key = source.key === 'nfc' ? 'other' : source.key
+      return sourceLabels[key] || key
+    }),
     datasets: [
       {
         data: sources.map(source => source.count),
-        backgroundColor: sources.map(
-          source => SOURCE_COLORS[source.key] || '#5b616e',
-        ),
+        backgroundColor: sources.map((source) => {
+          const key = source.key === 'nfc' ? 'other' : source.key
+          return SOURCE_COLORS[key] || '#5b616e'
+        }),
         borderWidth: 0,
         hoverOffset: 6,
       },

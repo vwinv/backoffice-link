@@ -44,7 +44,7 @@
         },
         "share": {
           "title": "Instant sharing",
-          "text": "Share your card via QR code, NFC, link, or even Apple Wallet."
+          "text": "Share your card via QR code, link, or even Apple Wallet."
         },
         "views": {
           "title": "Visit tracking",
@@ -260,7 +260,6 @@
       "qr": "QR code",
       "share": "Share",
       "link": "Link",
-      "nfc": "NFC",
       "app": "App",
       "other": "Other"
     }

@@ -44,7 +44,7 @@
         },
         "share": {
           "title": "Partage instantané",
-          "text": "Partagez votre carte via QR code, NFC, lien ou même Apple Wallet."
+          "text": "Partagez votre carte via QR code, lien ou même Apple Wallet."
         },
         "views": {
           "title": "Suivi des visites",
@@ -260,7 +260,6 @@
       "qr": "QR code",
       "share": "Partage",
       "link": "Lien",
-      "nfc": "NFC",
       "app": "App",
       "other": "Autre"
     }
