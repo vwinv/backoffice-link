@@ -155,9 +155,9 @@ function offerFeatures(offer: PublicOffer) {
   if (offer.hasSocialLinks) {
     features.push(t('landing.pricing.features.social'))
   }
-  if (offer.hasPortfolio) {
-    features.push(t('landing.pricing.features.portfolio'))
-  }
+  // if (offer.hasPortfolio) {
+  //   features.push(t('landing.pricing.features.portfolio'))
+  // }
   if (offer.maxAiScans < 0) {
     features.push(t('landing.pricing.features.aiUnlimited'))
   }

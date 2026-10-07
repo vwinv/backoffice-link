@@ -48,7 +48,7 @@ const sections = [
         title: 'Informations de profil (facultatives)',
         bullets: [
           'Réseaux sociaux',
-          'Portfolio',
+          // 'Portfolio',
           'Site web',
           'Informations de présentation',
         ],
