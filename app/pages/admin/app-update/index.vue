@@ -181,7 +181,7 @@ await load()
           <input
             v-model="form.iosStoreUrl"
             type="url"
-            placeholder="https://apps.apple.com/app/id…"
+            placeholder="https://apps.apple.com/us/app/drop-one/id6807993018"
             :disabled="!canUpdate"
           >
         </label>

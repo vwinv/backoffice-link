@@ -23,7 +23,7 @@
         <div class="stores">
           <a
             class="store"
-            href="https://apps.apple.com"
+            href="https://apps.apple.com/us/app/drop-one/id6807993018"
             target="_blank"
             rel="noopener noreferrer"
             :aria-label="$t('landing.cta.appStore')"
