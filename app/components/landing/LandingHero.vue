@@ -1,3 +1,7 @@
+<script setup lang="ts">
+const heroShot = useLandingImage('/images/IMG_1382.PNG')
+</script>
+
 <template>
   <section
     id="accueil"
@@ -50,7 +54,7 @@
       <div class="visual reveal">
         <div class="visual-block">
           <img
-            src="/images/IMG_1382.PNG"
+            :src="heroShot"
             :alt="$t('landing.hero.alt')"
             class="phones"
           >

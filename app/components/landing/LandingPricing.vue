@@ -41,6 +41,7 @@ type LandingPlan = {
   subtitle: string
   price: string
   unit: string
+  seatNote: string | null
   badge: string | null
   cta: string
   tone: 'free' | 'premium' | 'pro'
@@ -87,25 +88,32 @@ function isPerSeat(price: PublicOfferPrice) {
 
 function displayAmount(price: PublicOfferPrice | null) {
   if (!price || price.priceAmount <= 0) return '0'
-  const amount = isPerSeat(price)
-    ? (price.pricePerSeat ?? price.priceAmount)
-    : price.priceAmount
-  return formatAmount(amount)
+  return formatAmount(price.priceAmount)
 }
 
 function displayUnit(price: PublicOfferPrice | null) {
   if (!price || price.priceAmount <= 0) {
     return t('landing.pricing.unit.free')
   }
-
-  const seat = isPerSeat(price)
   if (price.billingType === 'YEARLY') {
-    return t(seat ? 'landing.pricing.unit.yearlySeat' : 'landing.pricing.unit.yearly')
+    return t('landing.pricing.unit.yearly')
   }
   if (price.billingType === 'LIFETIME') {
-    return t(seat ? 'landing.pricing.unit.lifetimeSeat' : 'landing.pricing.unit.lifetime')
+    return t('landing.pricing.unit.lifetime')
   }
-  return t(seat ? 'landing.pricing.unit.monthlySeat' : 'landing.pricing.unit.monthly')
+  return t('landing.pricing.unit.monthly')
+}
+
+function displaySeatNote(price: PublicOfferPrice | null) {
+  if (!price || !isPerSeat(price)) return null
+  const amount = formatAmount(price.pricePerSeat ?? 0)
+  if (price.billingType === 'YEARLY') {
+    return t('landing.pricing.seat.yearly', { amount })
+  }
+  if (price.billingType === 'LIFETIME') {
+    return t('landing.pricing.seat.lifetime', { amount })
+  }
+  return t('landing.pricing.seat.monthly', { amount })
 }
 
 function planTone(index: number, total: number): LandingPlan['tone'] {
@@ -179,6 +187,7 @@ const plans = computed<LandingPlan[]>(() => {
       subtitle: offer.subtitle?.trim() || '',
       price: displayAmount(price),
       unit: displayUnit(price),
+      seatNote: displaySeatNote(price),
       badge: price?.badgeLabel?.trim()
         || (price?.isPopular ? t('landing.pricing.popular') : null),
       cta: isFree
@@ -298,6 +307,12 @@ const isEmpty = computed(() => !pending.value && !loadFailed.value && plans.valu
           <p class="price">
             <strong>{{ plan.price }}</strong>
             <span>{{ plan.unit }}</span>
+          </p>
+          <p
+            v-if="plan.seatNote"
+            class="seat-note"
+          >
+            {{ plan.seatNote }}
           </p>
 
           <ul>
@@ -480,6 +495,14 @@ h3 {
   color: var(--do-muted);
   font-weight: 600;
   font-size: 0.8rem;
+}
+
+.seat-note {
+  margin: 4px 0 0;
+  color: var(--do-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 ul {

@@ -82,6 +82,11 @@
         "lifetimeSeat": "FCFA / user - lifetime",
         "free": "Free"
       },
+      "seat": {
+        "monthly": "+ {amount} FCFA / additional user",
+        "yearly": "+ {amount} FCFA / additional user / year",
+        "lifetime": "+ {amount} FCFA / additional user"
+      },
       "features": {
         "personalCard": "1 personal card",
         "teamSeats": "From {n} users",

@@ -1,3 +1,7 @@
+<script setup lang="ts">
+const modelsShot = useLandingImage('/images/IMG_1381.PNG')
+</script>
+
 <template>
   <section
     id="modeles"
@@ -5,7 +9,7 @@
   >
     <div class="panel reveal">
       <img
-        src="/images/IMG_1381.PNG"
+        :src="modelsShot"
         :alt="$t('landing.models.alt')"
         class="shot"
       >

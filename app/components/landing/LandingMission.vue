@@ -1,3 +1,7 @@
+<script setup lang="ts">
+const missionShot = useLandingImage('/images/IMG_1384.PNG')
+</script>
+
 <template>
   <section id="a-propos" class="mission">
     <div class="panel reveal">
@@ -38,7 +42,7 @@
 
         <div class="visual">
           <img
-            src="/images/IMG_1384.PNG"
+            :src="missionShot"
             :alt="$t('landing.mission.alt')"
           >
         </div>
