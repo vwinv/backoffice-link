@@ -7,7 +7,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
-const { hasPermission, isSuperAdmin } = useAuth()
+const { hasPermission } = useAuth()
 const { getClient, updateClient, deleteClient } = useAdminClients()
 const { deleteSubscription } = useAdminSubscriptions()
 
@@ -17,7 +17,7 @@ const canUpdateSubscription = computed(
 const canDeleteSubscription = computed(
   () => hasPermission('subscriptions.delete') || hasPermission('*'),
 )
-const canDeleteClient = computed(() => isSuperAdmin.value)
+const canDeleteClient = computed(() => hasPermission('clients.delete'))
 
 const detail = ref<AppClientDetail | null>(null)
 const loading = ref(true)

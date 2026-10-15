@@ -6,7 +6,7 @@ definePageMeta({
 })
 
 const { hasPermission } = useAuth()
-const { listClients, updateClient } = useAdminClients()
+const { listClients, updateClient, deleteClient } = useAdminClients()
 
 const search = ref('')
 const isActive = ref<'' | 'true' | 'false'>('')
@@ -19,6 +19,8 @@ const meta = ref({ total: 0, page: 1, limit: 20, totalPages: 1 })
 const loading = ref(false)
 const error = ref<string | null>(null)
 const actionBusyId = ref<string | null>(null)
+const deletingId = ref<string | null>(null)
+const canDeleteClient = computed(() => hasPermission('clients.delete'))
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -71,6 +73,31 @@ function fullName(client: AppClient) {
 
 function formatDate(iso: string) {
   return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(iso))
+}
+
+async function onDeleteClient(client: AppClient) {
+  if (!canDeleteClient.value || deletingId.value) return
+  const name = fullName(client)
+  const confirmed = confirm(
+    `Supprimer définitivement le client « ${name} » (${client.email}) ?\n\nCette action est irréversible et supprimera aussi ses cartes, équipes possédées et données associées.`,
+  )
+  if (!confirmed) return
+
+  deletingId.value = client.id
+  error.value = null
+  try {
+    await deleteClient(client.id)
+    if (clients.value.length === 1 && page.value > 1) {
+      page.value -= 1
+    }
+    await loadClients()
+  }
+  catch (err: unknown) {
+    error.value = err instanceof ApiError ? err.message : 'Suppression impossible'
+  }
+  finally {
+    deletingId.value = null
+  }
 }
 
 async function toggleActive(client: AppClient) {
@@ -192,10 +219,19 @@ await loadClients()
                   v-if="hasPermission('clients.update')"
                   type="button"
                   class="btn-ghost"
-                  :disabled="actionBusyId === item.id"
+                  :disabled="actionBusyId === item.id || deletingId === item.id"
                   @click="toggleActive(item)"
                 >
                   {{ item.isActive ? 'Désactiver' : 'Réactiver' }}
+                </button>
+                <button
+                  v-if="canDeleteClient"
+                  type="button"
+                  class="btn-danger"
+                  :disabled="deletingId === item.id || actionBusyId === item.id"
+                  @click="onDeleteClient(item)"
+                >
+                  {{ deletingId === item.id ? 'Suppression…' : 'Supprimer' }}
                 </button>
               </div>
             </td>
@@ -261,7 +297,11 @@ th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; colo
 }
 .btn-link { display: inline-flex; align-items: center; background: var(--do-blue-soft); color: var(--do-blue); text-decoration: none; }
 .btn-ghost, .pager button { border: 1.5px solid var(--do-line); background: #fff; }
-.btn-ghost:disabled, .pager button:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-ghost:disabled, .btn-danger:disabled, .pager button:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-danger {
+  min-height: 32px; padding: 0 12px; border-radius: 8px; font-weight: 700; font-size: 0.875rem;
+  cursor: pointer; border: 1.5px solid #f3c1c1; background: #fff1f1; color: #b42318;
+}
 .pager { display: flex; justify-content: center; gap: 16px; align-items: center; }
 @media (max-width: 900px) {
   .filters { grid-template-columns: 1fr; }
