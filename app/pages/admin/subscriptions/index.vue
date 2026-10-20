@@ -48,6 +48,7 @@ const form = reactive({
   status: 'ACTIVE' as string,
   purchasedSeats: 1,
   currentPeriodEnd: '',
+  countsInRevenue: true,
 })
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
@@ -158,6 +159,7 @@ function resetCreateForm() {
   form.status = 'ACTIVE'
   form.purchasedSeats = Math.max(1, selectedOffer.value?.minSeats ?? 1)
   form.currentPeriodEnd = ''
+  form.countsInRevenue = true
   clientQuery.value = ''
   clientResults.value = []
   selectedClient.value = null
@@ -194,6 +196,7 @@ function openEdit(item: AdminSubscriptionItem) {
   form.status = item.status
   form.purchasedSeats = Math.max(1, item.purchasedSeats ?? selectedOffer.value?.minSeats ?? 1)
   form.currentPeriodEnd = toDateInput(item.currentPeriodEnd)
+  form.countsInRevenue = item.countsInRevenue !== false
   formError.value = null
   if (!form.offerPriceId && selectedPrices.value[0]) {
     form.offerPriceId = selectedPrices.value[0].id
@@ -293,6 +296,7 @@ async function onCreate() {
       offerPriceId: form.offerPriceId || undefined,
       status: form.status === 'TRIAL' ? 'TRIAL' : 'ACTIVE',
       purchasedSeats: isTeamOffer.value ? form.purchasedSeats : undefined,
+      countsInRevenue: form.countsInRevenue,
     })
     showCreate.value = false
     page.value = 1
@@ -326,6 +330,7 @@ async function onUpdate() {
       currentPeriodEnd: form.currentPeriodEnd
         ? new Date(`${form.currentPeriodEnd}T12:00:00`).toISOString()
         : undefined,
+      countsInRevenue: form.countsInRevenue,
     })
     showEdit.value = false
     editingItem.value = null
@@ -433,7 +438,7 @@ const overviewCards = computed(() => {
     {
       label: 'CA total',
       value: formatMoney(s.revenue.total, s.revenue.currency),
-      hint: `${formatMoney(s.revenue.active, s.revenue.currency)} en cours`,
+      hint: `${formatMoney(s.revenue.active, s.revenue.currency)} en cours · hors tests`,
     },
     {
       label: 'Abonnements actifs',
@@ -576,7 +581,13 @@ if (editQuery && canUpdate.value) {
               </label>
             </div>
 
+            <label class="check-row">
+              <input v-model="form.countsInRevenue" type="checkbox">
+              <span>Comptabilisé dans le CA</span>
+            </label>
             <p class="hint">
+              Décochez pour un abonnement de test : il reste actif dans l’app,
+              mais n’entre pas dans le chiffre d’affaires.
               L’abonnement en cours du client (s’il existe) sera annulé et
               remplacé. Une offre pro lui permettra de créer son équipe dans l’app.
             </p>
@@ -667,7 +678,13 @@ if (editQuery && canUpdate.value) {
               </label>
             </div>
 
+            <label class="check-row">
+              <input v-model="form.countsInRevenue" type="checkbox">
+              <span>Comptabilisé dans le CA</span>
+            </label>
             <p class="hint">
+              Décochez pour un abonnement de test : les accès restent, le montant
+              sort du chiffre d’affaires.
               Si vous passez cet abonnement en actif, les autres abonnements
               en cours du client seront annulés.
             </p>
@@ -824,6 +841,9 @@ if (editQuery && canUpdate.value) {
             <td>
               <span class="badge" :class="statusClass(item.status)">
                 {{ statusLabel(item.status) }}
+              </span>
+              <span v-if="item.countsInRevenue === false" class="badge badge-off">
+                Hors CA
               </span>
             </td>
             <td>{{ billingLabel(item.billingPeriod) }}</td>
@@ -995,6 +1015,7 @@ th {
 .badge-trial { background: var(--do-blue-soft); color: var(--do-blue); }
 .badge-warn { background: #fff6e8; color: #9a6700; }
 .badge-off { background: #f1f2f4; color: #5b616e; }
+.badge + .badge { margin-left: 6px; }
 
 .pager { display: flex; justify-content: center; gap: 16px; align-items: center; }
 .pager button {
@@ -1037,6 +1058,11 @@ th {
 label { display: grid; gap: 6px; font-size: 0.85rem; font-weight: 600; }
 label.full { grid-column: 1 / -1; }
 .hint { margin: 0; color: var(--do-muted); font-size: 0.8rem; font-weight: 500; }
+.check-row {
+  display: flex; align-items: center; gap: 10px; margin-top: 4px;
+  font-weight: 700; font-size: 0.92rem;
+}
+.check-row input { width: 16px; height: 16px; }
 .selected-client {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   padding: 10px 12px; border-radius: 10px;

@@ -41,7 +41,7 @@ const overview = computed(() => {
     {
       label: 'CA abonnements',
       valueLabel: formatMoney(s.revenue.total, s.revenue.currency),
-      hint: `${formatMoney(s.revenue.active, s.revenue.currency)} en cours`,
+      hint: `${formatMoney(s.revenue.active, s.revenue.currency)} en cours · hors tests`,
     },
     {
       label: 'Utilisateurs',

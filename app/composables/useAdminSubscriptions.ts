@@ -25,6 +25,7 @@ export type AdminSubscriptionItem = {
   currentPeriodEnd: string | null
   cancelledAt: string | null
   purchasedSeats: number | null
+  countsInRevenue: boolean
   createdAt: string
   updatedAt: string
   paymentProvider: 'stripe' | 'paydunya' | null
@@ -151,6 +152,7 @@ export function useAdminSubscriptions() {
     teamId?: string
     purchasedSeats?: number
     currentPeriodEnd?: string
+    countsInRevenue?: boolean
   }) {
     return apiFetch<AdminSubscriptionItem>('/admin/subscriptions', {
       method: 'POST',
@@ -174,6 +176,7 @@ export function useAdminSubscriptions() {
       teamId?: string
       purchasedSeats?: number
       currentPeriodEnd?: string
+      countsInRevenue?: boolean
     },
   ) {
     return apiFetch<AdminSubscriptionItem>(`/admin/subscriptions/${id}`, {
