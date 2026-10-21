@@ -84,6 +84,13 @@ const editorPrices = computed(() => {
 
 const isTeamOffer = computed(() => selectedOffer.value?.audience === 'TEAM')
 
+const includedSeats = computed(() => {
+  const offer = selectedOffer.value
+  if (!offer) return 1
+  if ((offer.maxTeamMembers ?? 0) > 0) return offer.maxTeamMembers as number
+  return Math.max(1, offer.minSeats ?? 1)
+})
+
 const assignableOffers = computed(() => offers.value)
 
 function offerOptionLabel(offer: SubscriptionOfferFilter) {
@@ -157,7 +164,7 @@ function resetCreateForm() {
   form.offerId = offers.value.find(item => (item.prices?.length ?? 0) > 0)?.id ?? ''
   form.offerPriceId = selectedPrices.value[0]?.id ?? ''
   form.status = 'ACTIVE'
-  form.purchasedSeats = Math.max(1, selectedOffer.value?.minSeats ?? 1)
+  form.purchasedSeats = includedSeats.value
   form.currentPeriodEnd = ''
   form.countsInRevenue = true
   clientQuery.value = ''
@@ -194,7 +201,7 @@ function openEdit(item: AdminSubscriptionItem) {
   form.offerId = item.offer?.id ?? ''
   form.offerPriceId = item.price?.id ?? ''
   form.status = item.status
-  form.purchasedSeats = Math.max(1, item.purchasedSeats ?? selectedOffer.value?.minSeats ?? 1)
+  form.purchasedSeats = Math.max(includedSeats.value, item.purchasedSeats ?? includedSeats.value)
   form.currentPeriodEnd = toDateInput(item.currentPeriodEnd)
   form.countsInRevenue = item.countsInRevenue !== false
   formError.value = null
@@ -227,7 +234,7 @@ function closeEdit() {
 function onOfferChange() {
   const prices = selectedPrices.value
   form.offerPriceId = prices[0]?.id ?? ''
-  form.purchasedSeats = Math.max(1, selectedOffer.value?.minSeats ?? 1)
+  form.purchasedSeats = includedSeats.value
 }
 
 function onClientSearchInput() {
@@ -438,7 +445,7 @@ const overviewCards = computed(() => {
     {
       label: 'CA total',
       value: formatMoney(s.revenue.total, s.revenue.currency),
-      hint: `${formatMoney(s.revenue.active, s.revenue.currency)} en cours · hors tests`,
+      hint: '',
     },
     {
       label: 'Abonnements actifs',
@@ -575,7 +582,7 @@ if (editQuery && canUpdate.value) {
                 <input
                   v-model.number="form.purchasedSeats"
                   type="number"
-                  :min="selectedOffer?.minSeats || 1"
+                  :min="includedSeats"
                   required
                 >
               </label>
@@ -672,7 +679,7 @@ if (editQuery && canUpdate.value) {
                 <input
                   v-model.number="form.purchasedSeats"
                   type="number"
-                  :min="selectedOffer?.minSeats || 1"
+                  :min="includedSeats"
                   required
                 >
               </label>
@@ -721,7 +728,7 @@ if (editQuery && canUpdate.value) {
       >
         <span class="stat-label">{{ card.label }}</span>
         <strong>{{ statsLoading ? '…' : card.value }}</strong>
-        <small>{{ card.hint }}</small>
+        <small v-if="card.hint">{{ card.hint }}</small>
       </article>
     </div>
 

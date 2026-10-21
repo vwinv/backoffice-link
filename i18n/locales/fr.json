@@ -91,6 +91,7 @@
         "personalCard": "1 carte personnelle",
         "teamSeats": "À partir de {n} utilisateurs",
         "teamLimit": "Jusqu’à {n} membres",
+        "teamIncluded": "{n} places incluses",
         "enterpriseDashboard": "Tableau de bord entreprise",
         "share": "QR Code, lien, WhatsApp, message, AirDrop",
         "sharesUnlimited": "Partages illimités",

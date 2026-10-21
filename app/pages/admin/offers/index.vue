@@ -574,12 +574,13 @@ await load()
                 >
               </label>
               <label>
-                <span>Max membres (−1 = ∞)</span>
+                <span>Max membres</span>
                 <input
                   v-model.number="offerForm.maxTeamMembers"
                   type="number"
                   :disabled="editingOfferId ? !canUpdate : !canCreate"
                 >
+                <small>Places comprises dans l’offre. −1 = illimité.</small>
               </label>
               <label>
                 <span>Min. sièges</span>
@@ -1138,6 +1139,11 @@ label {
 label > span {
   font-size: 0.85rem;
   color: var(--do-muted);
+}
+
+label > small {
+  color: var(--do-muted);
+  font-size: 0.75rem;
 }
 
 input,

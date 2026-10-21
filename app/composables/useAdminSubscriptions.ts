@@ -14,6 +14,7 @@ export type SubscriptionOfferFilter = {
   slug: string
   audience: string
   minSeats?: number
+  maxTeamMembers?: number
   listedInApp?: boolean
   prices?: SubscriptionOfferPrice[]
 }

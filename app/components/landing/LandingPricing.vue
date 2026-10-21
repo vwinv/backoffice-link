@@ -127,7 +127,11 @@ function offerFeatures(offer: PublicOffer) {
   const features: string[] = []
 
   if (offer.audience === 'TEAM') {
-    if (offer.maxTeamMembers > 0) {
+    const perSeat = offer.prices.some(price => isPerSeat(price))
+    if (perSeat && offer.maxTeamMembers > 0) {
+      features.push(t('landing.pricing.features.teamIncluded', { n: offer.maxTeamMembers }))
+    }
+    else if (offer.maxTeamMembers > 0) {
       features.push(t('landing.pricing.features.teamLimit', { n: offer.maxTeamMembers }))
     }
     else {
