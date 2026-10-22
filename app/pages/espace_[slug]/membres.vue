@@ -48,14 +48,7 @@ const newSeatsTotal = computed(() => {
   return current + Math.max(1, additionalSeats.value || 1)
 })
 
-const seatsMaxAddable = computed(() => {
-  const purchase = seatPurchase.value
-  if (!purchase) return 100
-  if (purchase.maxSeats > 0) {
-    return Math.max(1, purchase.maxSeats - purchase.purchasedSeats)
-  }
-  return 100
-})
+const seatsMaxAddable = computed(() => 100)
 
 function openSeatsModal() {
   additionalSeats.value = 1

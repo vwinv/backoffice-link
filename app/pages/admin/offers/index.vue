@@ -106,7 +106,17 @@ function slugify(value: string) {
 }
 
 function audienceLabel(audience: string) {
-  return audience === 'TEAM' ? 'Équipe / Pro' : 'Personnel'
+  if (audience === 'TEAM') return 'Équipe / Pro'
+  if (audience === 'PORTFOLIO') return 'Portfolio'
+  return 'Personnel'
+}
+
+function onAudienceChange() {
+  if (offerForm.audience === 'PORTFOLIO') {
+    offerForm.hasPortfolio = true
+    offerForm.maxTeamMembers = 0
+    offerForm.minSeats = 1
+  }
 }
 
 function formatQuota(value: number) {
@@ -556,12 +566,16 @@ await load()
                 <select
                   v-model="offerForm.audience"
                   :disabled="editingOfferId ? !canUpdate : !canCreate"
+                  @change="onAudienceChange"
                 >
                   <option value="PERSONAL">
                     Personnel
                   </option>
                   <option value="TEAM">
                     Équipe / Pro
+                  </option>
+                  <option value="PORTFOLIO">
+                    Portfolio
                   </option>
                 </select>
               </label>
@@ -574,13 +588,12 @@ await load()
                 >
               </label>
               <label>
-                <span>Max membres</span>
+                <span>Places incluses (−1 = ∞)</span>
                 <input
                   v-model.number="offerForm.maxTeamMembers"
                   type="number"
                   :disabled="editingOfferId ? !canUpdate : !canCreate"
                 >
-                <small>Places comprises dans l’offre. −1 = illimité.</small>
               </label>
               <label>
                 <span>Min. sièges</span>
@@ -1139,11 +1152,6 @@ label {
 label > span {
   font-size: 0.85rem;
   color: var(--do-muted);
-}
-
-label > small {
-  color: var(--do-muted);
-  font-size: 0.75rem;
 }
 
 input,

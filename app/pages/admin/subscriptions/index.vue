@@ -48,7 +48,6 @@ const form = reactive({
   status: 'ACTIVE' as string,
   purchasedSeats: 1,
   currentPeriodEnd: '',
-  countsInRevenue: true,
 })
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
@@ -84,17 +83,14 @@ const editorPrices = computed(() => {
 
 const isTeamOffer = computed(() => selectedOffer.value?.audience === 'TEAM')
 
-const includedSeats = computed(() => {
-  const offer = selectedOffer.value
-  if (!offer) return 1
-  if ((offer.maxTeamMembers ?? 0) > 0) return offer.maxTeamMembers as number
-  return Math.max(1, offer.minSeats ?? 1)
-})
-
 const assignableOffers = computed(() => offers.value)
 
 function offerOptionLabel(offer: SubscriptionOfferFilter) {
-  const audience = offer.audience === 'TEAM' ? 'Pro' : 'Perso'
+  const audience = offer.audience === 'TEAM'
+    ? 'Pro'
+    : offer.audience === 'PORTFOLIO'
+      ? 'Portfolio'
+      : 'Perso'
   const hidden = offer.listedInApp === false ? ' · hors app' : ''
   return `${offer.title} - ${audience}${hidden}`
 }
@@ -160,13 +156,17 @@ function onFilterChange() {
   loadList()
 }
 
+function includedSeatsOf(offer?: SubscriptionOfferFilter | null) {
+  if (offer && (offer.maxTeamMembers ?? 0) > 0) return offer.maxTeamMembers as number
+  return Math.max(1, offer?.minSeats ?? 1)
+}
+
 function resetCreateForm() {
   form.offerId = offers.value.find(item => (item.prices?.length ?? 0) > 0)?.id ?? ''
   form.offerPriceId = selectedPrices.value[0]?.id ?? ''
   form.status = 'ACTIVE'
-  form.purchasedSeats = includedSeats.value
+  form.purchasedSeats = includedSeatsOf(selectedOffer.value)
   form.currentPeriodEnd = ''
-  form.countsInRevenue = true
   clientQuery.value = ''
   clientResults.value = []
   selectedClient.value = null
@@ -201,9 +201,11 @@ function openEdit(item: AdminSubscriptionItem) {
   form.offerId = item.offer?.id ?? ''
   form.offerPriceId = item.price?.id ?? ''
   form.status = item.status
-  form.purchasedSeats = Math.max(includedSeats.value, item.purchasedSeats ?? includedSeats.value)
+  form.purchasedSeats = Math.max(
+    includedSeatsOf(selectedOffer.value),
+    item.purchasedSeats ?? includedSeatsOf(selectedOffer.value),
+  )
   form.currentPeriodEnd = toDateInput(item.currentPeriodEnd)
-  form.countsInRevenue = item.countsInRevenue !== false
   formError.value = null
   if (!form.offerPriceId && selectedPrices.value[0]) {
     form.offerPriceId = selectedPrices.value[0].id
@@ -234,7 +236,7 @@ function closeEdit() {
 function onOfferChange() {
   const prices = selectedPrices.value
   form.offerPriceId = prices[0]?.id ?? ''
-  form.purchasedSeats = includedSeats.value
+  form.purchasedSeats = includedSeatsOf(selectedOffer.value)
 }
 
 function onClientSearchInput() {
@@ -303,7 +305,6 @@ async function onCreate() {
       offerPriceId: form.offerPriceId || undefined,
       status: form.status === 'TRIAL' ? 'TRIAL' : 'ACTIVE',
       purchasedSeats: isTeamOffer.value ? form.purchasedSeats : undefined,
-      countsInRevenue: form.countsInRevenue,
     })
     showCreate.value = false
     page.value = 1
@@ -337,7 +338,6 @@ async function onUpdate() {
       currentPeriodEnd: form.currentPeriodEnd
         ? new Date(`${form.currentPeriodEnd}T12:00:00`).toISOString()
         : undefined,
-      countsInRevenue: form.countsInRevenue,
     })
     showEdit.value = false
     editingItem.value = null
@@ -445,7 +445,7 @@ const overviewCards = computed(() => {
     {
       label: 'CA total',
       value: formatMoney(s.revenue.total, s.revenue.currency),
-      hint: '',
+      hint: `${formatMoney(s.revenue.active, s.revenue.currency)} en cours`,
     },
     {
       label: 'Abonnements actifs',
@@ -582,19 +582,13 @@ if (editQuery && canUpdate.value) {
                 <input
                   v-model.number="form.purchasedSeats"
                   type="number"
-                  :min="includedSeats"
+                  :min="includedSeatsOf(selectedOffer)"
                   required
                 >
               </label>
             </div>
 
-            <label class="check-row">
-              <input v-model="form.countsInRevenue" type="checkbox">
-              <span>Comptabilisé dans le CA</span>
-            </label>
             <p class="hint">
-              Décochez pour un abonnement de test : il reste actif dans l’app,
-              mais n’entre pas dans le chiffre d’affaires.
               L’abonnement en cours du client (s’il existe) sera annulé et
               remplacé. Une offre pro lui permettra de créer son équipe dans l’app.
             </p>
@@ -679,19 +673,13 @@ if (editQuery && canUpdate.value) {
                 <input
                   v-model.number="form.purchasedSeats"
                   type="number"
-                  :min="includedSeats"
+                  :min="includedSeatsOf(selectedOffer)"
                   required
                 >
               </label>
             </div>
 
-            <label class="check-row">
-              <input v-model="form.countsInRevenue" type="checkbox">
-              <span>Comptabilisé dans le CA</span>
-            </label>
             <p class="hint">
-              Décochez pour un abonnement de test : les accès restent, le montant
-              sort du chiffre d’affaires.
               Si vous passez cet abonnement en actif, les autres abonnements
               en cours du client seront annulés.
             </p>
@@ -728,7 +716,7 @@ if (editQuery && canUpdate.value) {
       >
         <span class="stat-label">{{ card.label }}</span>
         <strong>{{ statsLoading ? '…' : card.value }}</strong>
-        <small v-if="card.hint">{{ card.hint }}</small>
+        <small>{{ card.hint }}</small>
       </article>
     </div>
 
@@ -848,9 +836,6 @@ if (editQuery && canUpdate.value) {
             <td>
               <span class="badge" :class="statusClass(item.status)">
                 {{ statusLabel(item.status) }}
-              </span>
-              <span v-if="item.countsInRevenue === false" class="badge badge-off">
-                Hors CA
               </span>
             </td>
             <td>{{ billingLabel(item.billingPeriod) }}</td>
@@ -1022,7 +1007,6 @@ th {
 .badge-trial { background: var(--do-blue-soft); color: var(--do-blue); }
 .badge-warn { background: #fff6e8; color: #9a6700; }
 .badge-off { background: #f1f2f4; color: #5b616e; }
-.badge + .badge { margin-left: 6px; }
 
 .pager { display: flex; justify-content: center; gap: 16px; align-items: center; }
 .pager button {
@@ -1065,11 +1049,6 @@ th {
 label { display: grid; gap: 6px; font-size: 0.85rem; font-weight: 600; }
 label.full { grid-column: 1 / -1; }
 .hint { margin: 0; color: var(--do-muted); font-size: 0.8rem; font-weight: 500; }
-.check-row {
-  display: flex; align-items: center; gap: 10px; margin-top: 4px;
-  font-weight: 700; font-size: 0.92rem;
-}
-.check-row input { width: 16px; height: 16px; }
 .selected-client {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   padding: 10px 12px; border-radius: 10px;

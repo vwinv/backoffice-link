@@ -41,7 +41,7 @@ const overview = computed(() => {
     {
       label: 'CA abonnements',
       valueLabel: formatMoney(s.revenue.total, s.revenue.currency),
-      hint: '',
+      hint: `${formatMoney(s.revenue.active, s.revenue.currency)} en cours`,
     },
     {
       label: 'Utilisateurs',
@@ -114,7 +114,7 @@ const topOffers = computed(() => stats.value?.revenue.byOffer.slice(0, 5) ?? [])
           <p class="stat-value">
             {{ item.valueLabel }}
           </p>
-          <p v-if="item.hint" class="stat-hint">
+          <p class="stat-hint">
             {{ item.hint }}
           </p>
         </article>
@@ -157,7 +157,8 @@ const topOffers = computed(() => stats.value?.revenue.byOffer.slice(0, 5) ?? [])
                 <div class="offer-meta">
                   <strong>{{ offer.title }}</strong>
                   <small>
-                    {{ offer.subscriptionsCount }} abo
+                    {{ offer.subscriptionsCount }} abo -
+                    actif {{ formatMoney(offer.activeRevenue, stats.revenue.currency) }}
                   </small>
                 </div>
                 <strong class="offer-amount">
