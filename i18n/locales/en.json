@@ -90,8 +90,7 @@
       "features": {
         "personalCard": "1 personal card",
         "teamSeats": "From {n} users",
-        "teamLimit": "Up to {n} members",
-        "teamIncluded": "{n} included seats",
+        "teamLimit": "{n} included seats",
         "enterpriseDashboard": "Company dashboard",
         "share": "QR Code, link, WhatsApp, message, AirDrop",
         "sharesUnlimited": "Unlimited sharing",

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-type OfferAudience = 'PERSONAL' | 'TEAM'
+type OfferAudience = 'PERSONAL' | 'TEAM' | 'PORTFOLIO'
 type BillingType = 'MONTHLY' | 'YEARLY' | 'LIFETIME'
 
 type PublicOfferPrice = {
@@ -127,17 +127,16 @@ function offerFeatures(offer: PublicOffer) {
   const features: string[] = []
 
   if (offer.audience === 'TEAM') {
-    const perSeat = offer.prices.some(price => isPerSeat(price))
-    if (perSeat && offer.maxTeamMembers > 0) {
-      features.push(t('landing.pricing.features.teamIncluded', { n: offer.maxTeamMembers }))
-    }
-    else if (offer.maxTeamMembers > 0) {
+    if (offer.maxTeamMembers > 0) {
       features.push(t('landing.pricing.features.teamLimit', { n: offer.maxTeamMembers }))
     }
     else {
       features.push(t('landing.pricing.features.teamSeats', { n: Math.max(offer.minSeats, 1) }))
     }
     features.push(t('landing.pricing.features.enterpriseDashboard'))
+  }
+  else if (offer.audience === 'PORTFOLIO') {
+    features.push(t('landing.pricing.features.portfolio'))
   }
   else {
     features.push(t('landing.pricing.features.personalCard'))
