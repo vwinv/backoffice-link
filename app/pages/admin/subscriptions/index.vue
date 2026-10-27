@@ -47,6 +47,7 @@ const form = reactive({
   offerPriceId: '',
   status: 'ACTIVE' as string,
   purchasedSeats: 1,
+  durationMode: 'price' as 'price' | '1' | '3' | '6' | '12' | '24' | '36' | 'custom',
   currentPeriodEnd: '',
 })
 
@@ -166,6 +167,7 @@ function resetCreateForm() {
   form.offerPriceId = selectedPrices.value[0]?.id ?? ''
   form.status = 'ACTIVE'
   form.purchasedSeats = includedSeatsOf(selectedOffer.value)
+  form.durationMode = 'price'
   form.currentPeriodEnd = ''
   clientQuery.value = ''
   clientResults.value = []
@@ -177,16 +179,141 @@ function toDateInput(iso: string | null | undefined) {
   if (!iso) return ''
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return ''
+  return toDateInputFromDate(date)
+}
+
+function toDateInputFromDate(date: Date) {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
 
+function periodEndFromBilling(billingType?: string) {
+  const end = new Date()
+  if (billingType === 'YEARLY') end.setFullYear(end.getFullYear() + 1)
+  else if (billingType === 'LIFETIME') end.setFullYear(end.getFullYear() + 100)
+  else end.setMonth(end.getMonth() + 1)
+  return toDateInputFromDate(end)
+}
+
+function periodEndFromMonths(months: number) {
+  const end = new Date()
+  end.setMonth(end.getMonth() + months)
+  return toDateInputFromDate(end)
+}
+
+function selectedCreatePrice() {
+  return selectedPrices.value.find(item => item.id === form.offerPriceId)
+    ?? selectedPrices.value[0]
+}
+
+const createBillingType = computed(
+  () => selectedCreatePrice()?.billingType ?? 'MONTHLY',
+)
+
+const durationOptions = computed(() => {
+  if (createBillingType.value === 'LIFETIME') {
+    return [{ value: 'price', label: 'À vie' }]
+  }
+  if (createBillingType.value === 'YEARLY') {
+    return [
+      { value: 'price', label: 'Selon le tarif (1 an)' },
+      { value: '12', label: '1 an' },
+      { value: '24', label: '2 ans' },
+      { value: '36', label: '3 ans' },
+      { value: 'custom', label: 'Date personnalisée' },
+    ]
+  }
+  return [
+    { value: 'price', label: 'Selon le tarif (1 mois)' },
+    { value: '1', label: '1 mois' },
+    { value: '3', label: '3 mois' },
+    { value: '6', label: '6 mois' },
+    { value: '12', label: '1 an' },
+    { value: 'custom', label: 'Date personnalisée' },
+  ]
+})
+
+const minPeriodEnd = computed(() =>
+  minEndFor(createBillingType.value, new Date()),
+)
+
+function minEndFor(billingType: string | undefined, start: Date) {
+  if (billingType === 'LIFETIME') return ''
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+  if (billingType === 'YEARLY') end.setFullYear(end.getFullYear() + 1)
+  else end.setMonth(end.getMonth() + 1)
+  return toDateInputFromDate(end)
+}
+
+const editMinPeriodEnd = computed(() => {
+  if (!editingItem.value?.createdAt) return ''
+  const price = editorPrices.value.find(item => item.id === form.offerPriceId)
+  return minEndFor(price?.billingType, new Date(editingItem.value.createdAt))
+})
+
+function monthsCovered(start: Date, end: Date) {
+  const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+  const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+  if (endDay.getTime() <= startDay.getTime()) return 0
+  let months =
+    (endDay.getFullYear() - startDay.getFullYear()) * 12
+    + (endDay.getMonth() - startDay.getMonth())
+  if (endDay.getDate() > startDay.getDate()) months += 1
+  return Math.max(months, 1)
+}
+
+function billingUnits(billingType: string, endDate: string, start = new Date()) {
+  if (billingType === 'LIFETIME') return 1
+  const months = monthsCovered(start, new Date(`${endDate}T12:00:00`))
+  if (billingType === 'YEARLY') return Math.max(1, Math.ceil(months / 12))
+  return Math.max(1, months)
+}
+
+function periodBaseAmount(price: SubscriptionOfferPrice) {
+  const offer = selectedOffer.value
+  const base = price.amount || 0
+  if (
+    offer?.audience === 'TEAM'
+    && (offer.maxTeamMembers ?? 0) > 0
+    && price.pricePerSeat
+    && price.pricePerSeat > 0
+  ) {
+    const extra = Math.max(0, (form.purchasedSeats || 0) - (offer.maxTeamMembers || 0))
+    return base + price.pricePerSeat * extra
+  }
+  return base
+}
+
+function clampDurationMode() {
+  const allowed = durationOptions.value.map(option => option.value)
+  if (!allowed.includes(form.durationMode)) form.durationMode = 'price'
+}
+
+function ensurePeriodEndMin() {
+  if (minPeriodEnd.value && form.currentPeriodEnd && form.currentPeriodEnd < minPeriodEnd.value) {
+    form.currentPeriodEnd = minPeriodEnd.value
+  }
+}
+
+function applyDuration() {
+  if (form.durationMode === 'custom') {
+    ensurePeriodEndMin()
+    return
+  }
+  if (form.durationMode === 'price') {
+    form.currentPeriodEnd = periodEndFromBilling(selectedCreatePrice()?.billingType)
+    return
+  }
+  form.currentPeriodEnd = periodEndFromMonths(Number(form.durationMode))
+}
+
 function openCreate() {
   editingItem.value = null
   resetCreateForm()
   onOfferChange()
+  applyDuration()
   showCreate.value = true
 }
 
@@ -237,6 +364,36 @@ function onOfferChange() {
   const prices = selectedPrices.value
   form.offerPriceId = prices[0]?.id ?? ''
   form.purchasedSeats = includedSeatsOf(selectedOffer.value)
+  if (!editingItem.value) {
+    clampDurationMode()
+    applyDuration()
+  }
+}
+
+function onCreatePriceChange() {
+  const previous = form.durationMode
+  clampDurationMode()
+  if (form.durationMode !== 'custom' || form.durationMode !== previous) applyDuration()
+  else ensurePeriodEndMin()
+}
+
+function onDurationChange() {
+  applyDuration()
+}
+
+function onPeriodEndInput() {
+  if (createBillingType.value === 'LIFETIME') {
+    form.durationMode = 'price'
+    applyDuration()
+    return
+  }
+  form.durationMode = 'custom'
+  if (minPeriodEnd.value && form.currentPeriodEnd < minPeriodEnd.value) {
+    form.currentPeriodEnd = minPeriodEnd.value
+    formError.value = createBillingType.value === 'YEARLY'
+      ? 'Un tarif annuel dure au moins 1 an.'
+      : 'Un tarif mensuel dure au moins 1 mois.'
+  }
 }
 
 function onClientSearchInput() {
@@ -296,6 +453,16 @@ async function onCreate() {
     formError.value = 'Choisissez un tarif.'
     return
   }
+  if (!form.currentPeriodEnd) {
+    formError.value = 'Choisissez une date de fin.'
+    return
+  }
+  if (form.currentPeriodEnd < minPeriodEnd.value) {
+    formError.value = createBillingType.value === 'YEARLY'
+      ? 'Un tarif annuel dure au moins 1 an.'
+      : 'Un tarif mensuel dure au moins 1 mois.'
+    return
+  }
   creating.value = true
   formError.value = null
   try {
@@ -305,6 +472,7 @@ async function onCreate() {
       offerPriceId: form.offerPriceId || undefined,
       status: form.status === 'TRIAL' ? 'TRIAL' : 'ACTIVE',
       purchasedSeats: isTeamOffer.value ? form.purchasedSeats : undefined,
+      currentPeriodEnd: new Date(`${form.currentPeriodEnd}T12:00:00`).toISOString(),
     })
     showCreate.value = false
     page.value = 1
@@ -325,6 +493,17 @@ async function onUpdate() {
   }
   if (editorPrices.value.length > 0 && !form.offerPriceId) {
     formError.value = 'Choisissez un tarif.'
+    return
+  }
+  if (
+    editMinPeriodEnd.value
+    && form.currentPeriodEnd
+    && form.currentPeriodEnd < editMinPeriodEnd.value
+  ) {
+    const price = editorPrices.value.find(item => item.id === form.offerPriceId)
+    formError.value = price?.billingType === 'YEARLY'
+      ? 'Un tarif annuel dure au moins 1 an.'
+      : 'Un tarif mensuel dure au moins 1 mois.'
     return
   }
   saving.value = true
@@ -392,6 +571,23 @@ function formatMoney(value: number | undefined, currency = 'FCFA') {
   if (value == null) return '-'
   return `${new Intl.NumberFormat('fr-FR').format(value)} ${currency}`
 }
+
+const createPricePreview = computed(() => {
+  const price = selectedCreatePrice()
+  if (!showCreate.value || !price || !form.currentPeriodEnd) return null
+  const units = billingUnits(price.billingType, form.currentPeriodEnd)
+  const base = periodBaseAmount(price)
+  const total = Math.round(base * units)
+  const unitLabel = formatMoney(base, price.currency)
+  let detail = `${unitLabel} × ${units} mois`
+  if (price.billingType === 'YEARLY') {
+    detail = `${unitLabel} × ${units} an${units > 1 ? 's' : ''}`
+  }
+  else if (price.billingType === 'LIFETIME') {
+    detail = 'Tarif à vie'
+  }
+  return { total, currency: price.currency, detail }
+})
 
 function formatDate(iso: string | null | undefined) {
   if (!iso) return '-'
@@ -560,7 +756,7 @@ if (editQuery && canUpdate.value) {
               </label>
               <label>
                 <span>Tarif</span>
-                <select v-model="form.offerPriceId" :required="selectedPrices.length > 0" :disabled="!selectedPrices.length">
+                <select v-model="form.offerPriceId" :required="selectedPrices.length > 0" :disabled="!selectedPrices.length" @change="onCreatePriceChange">
                   <option
                     v-for="price in selectedPrices"
                     :key="price.id"
@@ -577,6 +773,29 @@ if (editQuery && canUpdate.value) {
                   <option value="TRIAL">Essai</option>
                 </select>
               </label>
+              <label>
+                <span>Durée</span>
+                <select v-model="form.durationMode" @change="onDurationChange">
+                  <option
+                    v-for="option in durationOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
+                </select>
+              </label>
+              <label>
+                <span>Fin de période</span>
+                <input
+                  v-model="form.currentPeriodEnd"
+                  type="date"
+                  required
+                  :min="minPeriodEnd"
+                  :readonly="createBillingType === 'LIFETIME'"
+                  @change="onPeriodEndInput"
+                >
+              </label>
               <label v-if="isTeamOffer">
                 <span>Sièges</span>
                 <input
@@ -588,9 +807,16 @@ if (editQuery && canUpdate.value) {
               </label>
             </div>
 
+            <p v-if="createPricePreview" class="price-total">
+              <span>Prix total</span>
+              <strong>{{ formatMoney(createPricePreview.total, createPricePreview.currency) }}</strong>
+              <small>{{ createPricePreview.detail }}</small>
+            </p>
+
             <p class="hint">
-              L’abonnement en cours du client (s’il existe) sera annulé et
-              remplacé. Une offre pro lui permettra de créer son équipe dans l’app.
+              Un tarif mensuel est multiplié par le nombre de mois (1 an = × 12).
+              Un tarif annuel dure au moins 1 an. L’abonnement en cours du client,
+              s’il existe, sera annulé et remplacé.
             </p>
 
             <footer class="modal-actions">
@@ -666,7 +892,7 @@ if (editQuery && canUpdate.value) {
               </label>
               <label>
                 <span>Fin de période</span>
-                <input v-model="form.currentPeriodEnd" type="date">
+                <input v-model="form.currentPeriodEnd" type="date" :min="editMinPeriodEnd || undefined">
               </label>
               <label v-if="isTeamOffer">
                 <span>Sièges</span>
@@ -841,7 +1067,7 @@ if (editQuery && canUpdate.value) {
             <td>{{ billingLabel(item.billingPeriod) }}</td>
             <td>
               <template v-if="item.price">
-                {{ formatMoney(item.price.amount, item.price.currency) }}
+                {{ formatMoney(item.totalAmount ?? item.price.amount, item.price.currency) }}
               </template>
               <template v-else>-</template>
             </td>
@@ -1049,6 +1275,18 @@ th {
 label { display: grid; gap: 6px; font-size: 0.85rem; font-weight: 600; }
 label.full { grid-column: 1 / -1; }
 .hint { margin: 0; color: var(--do-muted); font-size: 0.8rem; font-weight: 500; }
+.price-total {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(10, 107, 255, 0.08);
+}
+.price-total span { color: var(--do-muted); font-size: 0.78rem; font-weight: 600; }
+.price-total strong { font-size: 1.15rem; }
+.price-total small { color: var(--do-muted); font-size: 0.8rem; }
 .selected-client {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   padding: 10px 12px; border-radius: 10px;

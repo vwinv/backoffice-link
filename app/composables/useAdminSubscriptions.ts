@@ -26,6 +26,7 @@ export type AdminSubscriptionItem = {
   currentPeriodEnd: string | null
   cancelledAt: string | null
   purchasedSeats: number | null
+  totalAmount: number | null
   createdAt: string
   updatedAt: string
   paymentProvider: 'stripe' | 'paydunya' | null
