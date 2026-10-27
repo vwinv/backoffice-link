@@ -49,6 +49,7 @@ const form = reactive({
   purchasedSeats: 1,
   durationMode: 'price' as 'price' | '1' | '3' | '6' | '12' | '24' | '36' | 'custom',
   currentPeriodEnd: '',
+  countsInRevenue: true,
 })
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
@@ -169,6 +170,7 @@ function resetCreateForm() {
   form.purchasedSeats = includedSeatsOf(selectedOffer.value)
   form.durationMode = 'price'
   form.currentPeriodEnd = ''
+  form.countsInRevenue = true
   clientQuery.value = ''
   clientResults.value = []
   selectedClient.value = null
@@ -333,6 +335,7 @@ function openEdit(item: AdminSubscriptionItem) {
     item.purchasedSeats ?? includedSeatsOf(selectedOffer.value),
   )
   form.currentPeriodEnd = toDateInput(item.currentPeriodEnd)
+  form.countsInRevenue = item.countsInRevenue !== false
   formError.value = null
   if (!form.offerPriceId && selectedPrices.value[0]) {
     form.offerPriceId = selectedPrices.value[0].id
@@ -432,6 +435,10 @@ function clientLabel(client: AppClient) {
   return `${client.firstName} ${client.lastName}`.trim() || client.email
 }
 
+function onHorsCaChange(event: Event) {
+  form.countsInRevenue = !(event.target as HTMLInputElement).checked
+}
+
 function priceLabel(price: SubscriptionOfferPrice) {
   const period
     = price.billingType === 'YEARLY'
@@ -473,6 +480,7 @@ async function onCreate() {
       status: form.status === 'TRIAL' ? 'TRIAL' : 'ACTIVE',
       purchasedSeats: isTeamOffer.value ? form.purchasedSeats : undefined,
       currentPeriodEnd: new Date(`${form.currentPeriodEnd}T12:00:00`).toISOString(),
+      countsInRevenue: form.countsInRevenue,
     })
     showCreate.value = false
     page.value = 1
@@ -517,6 +525,7 @@ async function onUpdate() {
       currentPeriodEnd: form.currentPeriodEnd
         ? new Date(`${form.currentPeriodEnd}T12:00:00`).toISOString()
         : undefined,
+      countsInRevenue: form.countsInRevenue,
     })
     showEdit.value = false
     editingItem.value = null
@@ -807,6 +816,15 @@ if (editQuery && canUpdate.value) {
               </label>
             </div>
 
+            <label class="check-row">
+              <input
+                type="checkbox"
+                :checked="!form.countsInRevenue"
+                @change="onHorsCaChange"
+              >
+              <span>Hors CA</span>
+            </label>
+
             <p v-if="createPricePreview" class="price-total">
               <span>Prix total</span>
               <strong>{{ formatMoney(createPricePreview.total, createPricePreview.currency) }}</strong>
@@ -814,9 +832,10 @@ if (editQuery && canUpdate.value) {
             </p>
 
             <p class="hint">
+              Cochez Hors CA pour un abonnement de test : il reste actif dans l’app,
+              mais son montant sort du chiffre d’affaires.
               Un tarif mensuel est multiplié par le nombre de mois (1 an = × 12).
-              Un tarif annuel dure au moins 1 an. L’abonnement en cours du client,
-              s’il existe, sera annulé et remplacé.
+              Un tarif annuel dure au moins 1 an.
             </p>
 
             <footer class="modal-actions">
@@ -905,7 +924,17 @@ if (editQuery && canUpdate.value) {
               </label>
             </div>
 
+            <label class="check-row">
+              <input
+                type="checkbox"
+                :checked="!form.countsInRevenue"
+                @change="onHorsCaChange"
+              >
+              <span>Hors CA</span>
+            </label>
             <p class="hint">
+              Cochez Hors CA pour sortir cet abonnement du chiffre d’affaires.
+              Les accès dans l’app restent inchangés.
               Si vous passez cet abonnement en actif, les autres abonnements
               en cours du client seront annulés.
             </p>
@@ -1062,6 +1091,9 @@ if (editQuery && canUpdate.value) {
             <td>
               <span class="badge" :class="statusClass(item.status)">
                 {{ statusLabel(item.status) }}
+              </span>
+              <span v-if="item.countsInRevenue === false" class="badge badge-off">
+                Hors CA
               </span>
             </td>
             <td>{{ billingLabel(item.billingPeriod) }}</td>
@@ -1233,6 +1265,7 @@ th {
 .badge-trial { background: var(--do-blue-soft); color: var(--do-blue); }
 .badge-warn { background: #fff6e8; color: #9a6700; }
 .badge-off { background: #f1f2f4; color: #5b616e; }
+.badge + .badge { margin-left: 6px; }
 
 .pager { display: flex; justify-content: center; gap: 16px; align-items: center; }
 .pager button {
@@ -1275,6 +1308,15 @@ th {
 label { display: grid; gap: 6px; font-size: 0.85rem; font-weight: 600; }
 label.full { grid-column: 1 / -1; }
 .hint { margin: 0; color: var(--do-muted); font-size: 0.8rem; font-weight: 500; }
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+.check-row input { width: 16px; height: 16px; }
 .price-total {
   display: flex;
   flex-direction: column;
