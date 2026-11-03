@@ -5,6 +5,8 @@ export type NotificationCampaign = {
   id: string
   title: string
   body: string
+  titleEn: string | null
+  bodyEn: string | null
   audience: NotificationAudience
   userIds: string[]
   status: NotificationCampaignStatus
@@ -45,6 +47,8 @@ export type NotificationStats = {
 export type CreateNotificationPayload = {
   title: string
   body: string
+  titleEn?: string
+  bodyEn?: string
   audience: NotificationAudience
   userIds?: string[]
 }

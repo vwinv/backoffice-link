@@ -32,6 +32,8 @@ const formError = ref<string | null>(null)
 const form = reactive({
   title: '',
   body: '',
+  titleEn: '',
+  bodyEn: '',
   audience: 'ALL' as NotificationAudience,
 })
 
@@ -102,6 +104,8 @@ function goToPage(next: number) {
 function openCompose() {
   form.title = ''
   form.body = ''
+  form.titleEn = ''
+  form.bodyEn = ''
   form.audience = 'ALL'
   formError.value = null
   selectedClients.value = []
@@ -206,9 +210,17 @@ const audienceOptions: Array<{
 
 const previewTitle = computed(() => form.title.trim() || 'Titre de la notification')
 const previewBody = computed(() => form.body.trim() || 'Le message s’affichera ici.')
+const englishPairOk = computed(() => {
+  const titleEn = form.titleEn.trim()
+  const bodyEn = form.bodyEn.trim()
+  if (!titleEn && !bodyEn) return true
+  return titleEn.length >= 2 && bodyEn.length >= 2
+})
+
 const canSend = computed(() =>
   form.title.trim().length >= 2
   && form.body.trim().length >= 2
+  && englishPairOk.value
   && (form.audience !== 'USER_IDS' || selectedClients.value.length > 0)
   && !sending.value,
 )
@@ -230,11 +242,17 @@ async function onSend() {
     formError.value = 'Ajoutez au moins un client ciblé'
     return
   }
+  if (!englishPairOk.value) {
+    formError.value = 'Pour l’anglais, renseignez le titre et le message ensemble'
+    return
+  }
   sending.value = true
   try {
     await sendCampaign({
       title: form.title.trim(),
       body: form.body.trim(),
+      titleEn: form.titleEn.trim() || undefined,
+      bodyEn: form.bodyEn.trim() || undefined,
       audience: form.audience,
       userIds: form.audience === 'USER_IDS'
         ? selectedClients.value.map(c => c.id)
@@ -398,7 +416,7 @@ await Promise.all([loadStats(), loadCampaigns()])
 
                 <label class="field">
                   <span class="field-label">
-                    Titre
+                    Titre (FR)
                     <small>{{ form.title.length }}/120</small>
                   </span>
                   <input
@@ -412,7 +430,7 @@ await Promise.all([loadStats(), loadCampaigns()])
 
                 <label class="field">
                   <span class="field-label">
-                    Message
+                    Message (FR)
                     <small>{{ form.body.length }}/1000</small>
                   </span>
                   <textarea
@@ -424,6 +442,37 @@ await Promise.all([loadStats(), loadCampaigns()])
                     placeholder="Texte affiché dans l’app et le push…"
                   />
                 </label>
+
+                <label class="field">
+                  <span class="field-label">
+                    Titre (EN)
+                    <small>{{ form.titleEn.length }}/120</small>
+                  </span>
+                  <input
+                    v-model="form.titleEn"
+                    minlength="2"
+                    maxlength="120"
+                    placeholder="Ex. New Premium offer"
+                  >
+                </label>
+
+                <label class="field">
+                  <span class="field-label">
+                    Message (EN)
+                    <small>{{ form.bodyEn.length }}/1000</small>
+                  </span>
+                  <textarea
+                    v-model="form.bodyEn"
+                    minlength="2"
+                    maxlength="1000"
+                    rows="4"
+                    placeholder="Optional English text for users with English app language…"
+                  />
+                </label>
+                <p class="hint">
+                  Chaque utilisateur reçoit la version de la langue choisie dans l’app.
+                  Sans texte EN, le français est envoyé à tout le monde.
+                </p>
 
                 <div class="field">
                   <span class="field-label">Destinataires</span>
