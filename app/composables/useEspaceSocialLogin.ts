@@ -2,22 +2,26 @@ type GoogleCredentialResponse = {
   credential?: string
 }
 
+type GooglePromptNotification = {
+  isNotDisplayed: () => boolean
+  isSkippedMoment: () => boolean
+  isDismissedMoment: () => boolean
+  getNotDisplayedReason?: () => string
+  getSkippedReason?: () => string
+}
+
 type GoogleAccountsId = {
   initialize: (config: {
     client_id: string
     callback: (response: GoogleCredentialResponse) => void
     auto_select?: boolean
     cancel_on_tap_outside?: boolean
+    use_fedcm_for_prompt?: boolean
   }) => void
-  prompt: (momentListener?: (notification: {
-    isNotDisplayed: () => boolean
-    isSkippedMoment: () => boolean
-    getNotDisplayedReason?: () => string
-  }) => void) => void
-  renderButton: (
-    parent: HTMLElement,
-    options: Record<string, string | number | boolean>,
+  prompt: (
+    momentListener?: (notification: GooglePromptNotification) => void,
   ) => void
+  cancel: () => void
 }
 
 type AppleAuthorization = {
@@ -121,34 +125,60 @@ export function useEspaceSocialLogin() {
     })
   }
 
-  /** One Tap / prompt ; si bloqué, le bouton renderButton reste utilisable. */
-  async function promptGoogle(
-    onCredential: (idToken: string) => void | Promise<void>,
-  ) {
+  /** Bouton custom : One Tap / FedCM via prompt(). */
+  async function signInWithGoogle(): Promise<string> {
     await ensureGoogle()
-    window.google!.accounts!.id!.initialize({
-      client_id: googleClientId.value,
-      callback: async (response) => {
-        const token = response.credential?.trim()
-        if (!token) return
-        await onCredential(token)
-      },
-      auto_select: false,
-      cancel_on_tap_outside: true,
-    })
-  }
 
-  function renderGoogleButton(el: HTMLElement) {
-    if (!window.google?.accounts?.id) return
-    el.innerHTML = ''
-    window.google.accounts.id.renderButton(el, {
-      type: 'standard',
-      theme: 'outline',
-      size: 'large',
-      text: 'continue_with',
-      shape: 'pill',
-      width: el.clientWidth || 360,
-      logo_alignment: 'left',
+    return new Promise((resolve, reject) => {
+      let settled = false
+
+      const finish = (error?: Error, token?: string) => {
+        if (settled) return
+        settled = true
+        try {
+          window.google?.accounts?.id?.cancel()
+        }
+        catch {
+          // ignore
+        }
+        if (error) reject(error)
+        else if (token) resolve(token)
+        else reject(new Error('Connexion Google annulée'))
+      }
+
+      window.google!.accounts!.id!.initialize({
+        client_id: googleClientId.value,
+        callback: (response) => {
+          const token = response.credential?.trim()
+          if (!token) {
+            finish(new Error('Connexion Google incomplete'))
+            return
+          }
+          finish(undefined, token)
+        },
+        auto_select: false,
+        cancel_on_tap_outside: true,
+        use_fedcm_for_prompt: true,
+      })
+
+      window.google!.accounts!.id!.prompt((notification) => {
+        if (settled) return
+        if (notification.isDismissedMoment()) {
+          finish(new Error('Connexion Google annulée'))
+          return
+        }
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          const reason
+            = notification.getNotDisplayedReason?.()
+              || notification.getSkippedReason?.()
+              || 'unavailable'
+          finish(
+            new Error(
+              `Connexion Google indisponible (${reason}). Autorisez les cookies tiers ou réessayez.`,
+            ),
+          )
+        }
+      })
     })
   }
 
@@ -173,8 +203,7 @@ export function useEspaceSocialLogin() {
   return {
     googleReady,
     appleReady,
-    promptGoogle,
-    renderGoogleButton,
+    signInWithGoogle,
     signInWithApple,
   }
 }
