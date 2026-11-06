@@ -159,6 +159,10 @@
       "hidePassword": "Hide password",
       "submit": "Sign in",
       "submitting": "Signing in…",
+      "or": "or",
+      "google": "Continue with Google",
+      "apple": "Continue with Apple",
+      "oauthSubmitting": "Signing in…",
       "noTeam": "No team space available for this account.",
       "failed": "Unable to sign in"
     },

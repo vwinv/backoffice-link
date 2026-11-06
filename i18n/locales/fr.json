@@ -159,6 +159,10 @@
       "hidePassword": "Masquer le mot de passe",
       "submit": "Se connecter",
       "submitting": "Connexion…",
+      "or": "ou",
+      "google": "Continuer avec Google",
+      "apple": "Continuer avec Apple",
+      "oauthSubmitting": "Connexion sociale…",
       "noTeam": "Aucun espace équipe accessible pour ce compte.",
       "failed": "Connexion impossible"
     },

@@ -60,6 +60,46 @@ export function useEspaceAuth() {
     }
   }
 
+  async function loginWithGoogle(idToken: string) {
+    loading.value = true
+    try {
+      const response = await apiFetch<AuthResponse>('/auth/oauth/google', {
+        method: 'POST',
+        body: { idToken },
+      })
+      setSession(response.accessToken, response.user)
+      return response.user
+    }
+    finally {
+      loading.value = false
+      ready.value = true
+    }
+  }
+
+  async function loginWithApple(
+    idToken: string,
+    firstName?: string,
+    lastName?: string,
+  ) {
+    loading.value = true
+    try {
+      const response = await apiFetch<AuthResponse>('/auth/oauth/apple', {
+        method: 'POST',
+        body: {
+          idToken,
+          ...(firstName ? { firstName } : {}),
+          ...(lastName ? { lastName } : {}),
+        },
+      })
+      setSession(response.accessToken, response.user)
+      return response.user
+    }
+    finally {
+      loading.value = false
+      ready.value = true
+    }
+  }
+
   async function fetchMe() {
     if (!token.value) {
       user.value = null
@@ -106,6 +146,8 @@ export function useEspaceAuth() {
     isAuthenticated,
     displayName,
     login,
+    loginWithGoogle,
+    loginWithApple,
     fetchMe,
     ensureSession,
     logout,

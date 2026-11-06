@@ -7,47 +7,112 @@ const { t } = useI18n()
 const auth = useEspaceAuth()
 const route = useRoute()
 const { listMine } = useEspace()
+const social = useEspaceSocialLogin()
 
 const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const errorMessage = ref('')
 const submitting = ref(false)
+const oauthSubmitting = ref(false)
+const googleButtonEl = ref<HTMLElement | null>(null)
+
+function setError(error: unknown) {
+  if (error instanceof ApiError) {
+    errorMessage.value = error.message
+  }
+  else if (error instanceof Error) {
+    errorMessage.value = error.message
+  }
+  else {
+    errorMessage.value = t('espace.login.failed')
+  }
+}
+
+async function redirectAfterAuth() {
+  const redirect = typeof route.query.redirect === 'string'
+    ? route.query.redirect
+    : ''
+  if (redirect.startsWith('/espace_')) {
+    await navigateTo(redirect)
+    return
+  }
+  const teams = await listMine()
+  if (teams[0]?.espacePath) {
+    await navigateTo(teams[0].espacePath)
+    return
+  }
+  errorMessage.value = t('espace.login.noTeam')
+}
 
 async function onSubmit() {
   errorMessage.value = ''
   submitting.value = true
   try {
     await auth.login(email.value.trim(), password.value)
-    const redirect = typeof route.query.redirect === 'string'
-      ? route.query.redirect
-      : ''
-    if (redirect.startsWith('/espace_')) {
-      await navigateTo(redirect)
-      return
-    }
-    const teams = await listMine()
-    if (teams[0]?.espacePath) {
-      await navigateTo(teams[0].espacePath)
-      return
-    }
-    errorMessage.value = t('espace.login.noTeam')
+    await redirectAfterAuth()
   }
   catch (error: unknown) {
-    if (error instanceof ApiError) {
-      errorMessage.value = error.message
-    }
-    else if (error instanceof Error) {
-      errorMessage.value = error.message
-    }
-    else {
-      errorMessage.value = t('espace.login.failed')
-    }
+    setError(error)
   }
   finally {
     submitting.value = false
   }
 }
+
+async function completeGoogle(idToken: string) {
+  errorMessage.value = ''
+  oauthSubmitting.value = true
+  try {
+    await auth.loginWithGoogle(idToken)
+    await redirectAfterAuth()
+  }
+  catch (error: unknown) {
+    setError(error)
+  }
+  finally {
+    oauthSubmitting.value = false
+  }
+}
+
+async function onAppleClick() {
+  if (oauthSubmitting.value || submitting.value) return
+  errorMessage.value = ''
+  oauthSubmitting.value = true
+  try {
+    const result = await social.signInWithApple()
+    await auth.loginWithApple(
+      result.idToken,
+      result.firstName,
+      result.lastName,
+    )
+    await redirectAfterAuth()
+  }
+  catch (error: unknown) {
+    const message = error instanceof Error ? error.message : ''
+    if (/popup_closed|user.*cancel|annul/i.test(message)) {
+      errorMessage.value = ''
+      return
+    }
+    setError(error)
+  }
+  finally {
+    oauthSubmitting.value = false
+  }
+}
+
+onMounted(async () => {
+  if (!social.googleReady.value || !googleButtonEl.value) return
+  try {
+    await social.promptGoogle(completeGoogle)
+    if (googleButtonEl.value) {
+      social.renderGoogleButton(googleButtonEl.value)
+    }
+  }
+  catch (error: unknown) {
+    console.warn('Google Sign-In init failed', error)
+  }
+})
 </script>
 
 <template>
@@ -71,6 +136,48 @@ async function onSubmit() {
       <p class="lead">
         {{ $t('espace.login.lead') }}
       </p>
+
+      <div
+        v-if="social.googleReady || social.appleReady"
+        class="social"
+      >
+        <div
+          v-if="social.googleReady"
+          ref="googleButtonEl"
+          class="google-btn"
+          :aria-busy="oauthSubmitting"
+        />
+
+        <button
+          v-if="social.appleReady"
+          type="button"
+          class="apple-btn"
+          :disabled="oauthSubmitting || submitting"
+          @click="onAppleClick"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              fill="currentColor"
+              d="M16.365 1.43c0 1.14-.43 2.2-1.2 3.03-.84.9-2.23 1.6-3.4 1.5-.15-1.1.4-2.27 1.18-3.13.85-.95 2.32-1.64 3.42-1.4zM20.5 17.2c-.58 1.34-.86 1.93-1.61 3.11-1.05 1.63-2.53 3.66-4.37 3.68-1.63.03-2.05-1.06-4.27-1.05-2.22.01-2.68 1.08-4.31 1.05-1.84-.03-3.25-1.85-4.3-3.48C-.1 17.3-.9 13.4.9 10.7c1.13-1.73 2.92-2.74 4.6-2.74 1.72 0 2.8 1.06 4.22 1.06 1.38 0 2.22-1.07 4.24-1.07 1.5 0 3.09.82 4.2 2.23-3.7 2.03-3.1 7.32.34 6.99z"
+            />
+          </svg>
+          <span>{{
+            oauthSubmitting
+              ? $t('espace.login.oauthSubmitting')
+              : $t('espace.login.apple')
+          }}</span>
+        </button>
+
+        <div class="divider">
+          <span>{{ $t('espace.login.or') }}</span>
+        </div>
+      </div>
 
       <form
         class="form"
@@ -163,7 +270,7 @@ async function onSubmit() {
         <button
           class="submit"
           type="submit"
-          :disabled="submitting"
+          :disabled="submitting || oauthSubmitting"
         >
           {{ submitting ? $t('espace.login.submitting') : $t('espace.login.submit') }}
         </button>
@@ -237,6 +344,65 @@ h1 {
   margin: 0 0 28px;
   color: #5b616e;
   line-height: 1.5;
+}
+
+.social {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.google-btn {
+  min-height: 44px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.google-btn :deep(div) {
+  width: 100% !important;
+}
+
+.apple-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  width: 100%;
+  border: 0;
+  border-radius: 999px;
+  background: #000;
+  color: #fff;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.apple-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.divider {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 4px;
+  color: #8e8e93;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  height: 1px;
+  background: #e5e5ea;
 }
 
 .form {

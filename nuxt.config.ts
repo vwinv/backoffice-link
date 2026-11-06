@@ -51,6 +51,12 @@ export default defineNuxtConfig({
       // Surchargé automatiquement par NUXT_PUBLIC_API_BASE_URL
       //apiBaseUrl: 'http://localhost:3000/api/v1',
       apiBaseUrl: 'https://api.dropone.pro/api/v1',
+      // OAuth web (espace équipe) — surchargés par NUXT_PUBLIC_*
+      googleClientId:
+        '880526404169-hkfi066mbr50rge90kqk11guuh6kojm5.apps.googleusercontent.com',
+      appleClientId: 'com.mega.dropone.web',
+      // Domaine + Return URL à enregistrer dans le Services ID Apple
+      appleRedirectUri: 'https://dropone.pro/espace/login',
     },
   },
 })
