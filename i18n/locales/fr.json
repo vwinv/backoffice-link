@@ -163,7 +163,7 @@
       "google": "Continuer avec Google",
       "apple": "Continuer avec Apple",
       "oauthSubmitting": "Connexion sociale…",
-      "noTeam": "Aucun espace équipe accessible pour ce compte.",
+      "noTeam": "Aucun espace équipe accessible. Seuls le propriétaire et les administrateurs d’une équipe peuvent se connecter ici.",
       "failed": "Connexion impossible"
     },
     "dashboard": {

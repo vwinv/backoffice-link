@@ -47,7 +47,7 @@ export function useEspaceAuth() {
   async function login(email: string, password: string) {
     loading.value = true
     try {
-      const response = await apiFetch<AuthResponse>('/auth/login', {
+      const response = await apiFetch<AuthResponse>('/auth/espace/login', {
         method: 'POST',
         body: { email, password },
       })
@@ -63,7 +63,7 @@ export function useEspaceAuth() {
   async function loginWithGoogle(idToken: string) {
     loading.value = true
     try {
-      const response = await apiFetch<AuthResponse>('/auth/oauth/google', {
+      const response = await apiFetch<AuthResponse>('/auth/espace/oauth/google', {
         method: 'POST',
         body: { idToken },
       })
@@ -83,7 +83,7 @@ export function useEspaceAuth() {
   ) {
     loading.value = true
     try {
-      const response = await apiFetch<AuthResponse>('/auth/oauth/apple', {
+      const response = await apiFetch<AuthResponse>('/auth/espace/oauth/apple', {
         method: 'POST',
         body: {
           idToken,

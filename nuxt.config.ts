@@ -54,9 +54,10 @@ export default defineNuxtConfig({
       // OAuth web (espace équipe) — surchargés par NUXT_PUBLIC_*
       googleClientId:
         '880526404169-hkfi066mbr50rge90kqk11guuh6kojm5.apps.googleusercontent.com',
-      appleClientId: 'com.mega.dropone.web',
+      appleClientId: 'com.mega.dropone2.web',
       // Domaine + Return URL à enregistrer dans le Services ID Apple
-      appleRedirectUri: 'https://dropone.pro/espace/login',
+      // Prod redirige dropone.pro → www.dropone.pro (origine OAuth réelle).
+      appleRedirectUri: 'https://www.dropone.pro/espace/login',
     },
   },
 })
