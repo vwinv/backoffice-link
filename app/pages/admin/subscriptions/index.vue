@@ -1044,7 +1044,7 @@ if (editQuery && canUpdate.value) {
             <th>Offre</th>
             <th>Statut</th>
             <th>Période</th>
-            <th>Prix</th>
+            <th>Débit</th>
             <th>Fin</th>
             <th>Créé</th>
             <th v-if="canAct"></th>
@@ -1095,11 +1095,23 @@ if (editQuery && canUpdate.value) {
               <span v-if="item.countsInRevenue === false" class="badge badge-off">
                 Hors CA
               </span>
+              <span
+                v-if="item.paymentProvider === 'points'"
+                class="badge badge-points"
+              >
+                Drop-Points
+              </span>
             </td>
             <td>{{ billingLabel(item.billingPeriod) }}</td>
             <td>
-              <template v-if="item.price">
-                {{ formatMoney(item.totalAmount ?? item.price.amount, item.price.currency) }}
+              <template v-if="item.paymentProvider === 'points' && item.pointsSpent != null">
+                <strong>{{ item.pointsSpent }} pts</strong>
+                <small class="debit-sub">
+                  {{ formatMoney(item.chargedAmount ?? item.totalAmount ?? item.price?.amount, item.price?.currency || 'FCFA') }}
+                </small>
+              </template>
+              <template v-else-if="item.chargedAmount != null || item.totalAmount != null || item.price">
+                {{ formatMoney(item.chargedAmount ?? item.totalAmount ?? item.price?.amount, item.price?.currency || 'FCFA') }}
               </template>
               <template v-else>-</template>
             </td>
@@ -1249,6 +1261,13 @@ th {
 .user-cell { display: flex; gap: 12px; align-items: center; }
 .user-cell strong { display: block; }
 .user-cell small { color: var(--do-muted); }
+.debit-sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--do-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
 .name-link { color: inherit; text-decoration: none; }
 .name-link:hover { color: var(--do-blue); }
 .avatar {
@@ -1265,6 +1284,7 @@ th {
 .badge-trial { background: var(--do-blue-soft); color: var(--do-blue); }
 .badge-warn { background: #fff6e8; color: #9a6700; }
 .badge-off { background: #f1f2f4; color: #5b616e; }
+.badge-points { background: #e8f0ff; color: #0a53c7; }
 .badge + .badge { margin-left: 6px; }
 
 .pager { display: flex; justify-content: center; gap: 16px; align-items: center; }

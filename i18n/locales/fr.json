@@ -181,7 +181,19 @@
       "member": "Membre",
       "role": "Rôle",
       "see": "Voir",
-      "seeStats": "Voir les statistiques de {name}"
+      "seeStats": "Voir les statistiques de {name}",
+      "visitors": "Visiteurs",
+      "visitorsLead": "Personnes qui ont consulté les cartes de l’équipe",
+      "visitorsUnique": "Uniques",
+      "visitorsDropOne": "DropOne",
+      "visitorsGuest": "Anonymes",
+      "visitorsFilterAll": "Tous",
+      "visitorsFilterDropOne": "DropOne",
+      "visitorsFilterGuest": "Anonymes",
+      "visitorsEmpty": "Aucun visiteur pour le moment.",
+      "visitorsLoadError": "Impossible de charger les visiteurs",
+      "visitorsCardOf": "Carte de {name}",
+      "visitorsLocked": "L’historique des visiteurs nécessite une offre adaptée."
     },
     "members": {
       "title": "Membres",

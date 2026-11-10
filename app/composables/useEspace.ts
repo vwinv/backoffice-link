@@ -89,6 +89,38 @@ export type EspaceInvoicesParty = {
   issuer: { name: string, legalName: string, email: string, website: string }
 }
 
+export type EspaceVisitor = {
+  id: string
+  viewedAt: string
+  isDropOneUser: boolean
+  source: string
+  displayName: string
+  subtitle: string
+  avatarUrl: string | null
+  initials: string
+  viewerUserId: string | null
+  guestFirstName?: string | null
+  guestLastName?: string | null
+  guestEmail?: string | null
+  guestPhone?: string | null
+  deviceLabel: string | null
+  card: {
+    id: string
+    slug: string
+    ownerName: string
+  } | null
+}
+
+export type EspaceVisitorsPayload = {
+  summary: {
+    views: number
+    uniqueVisitors: number
+    dropOneCount: number
+    guestCount: number
+  }
+  visitors: EspaceVisitor[]
+}
+
 export type EspaceMemberAnalytics = {
   member: {
     memberId: string
@@ -266,6 +298,17 @@ export function useEspace() {
     )
   }
 
+  function getVisitors(
+    slug: string,
+    filter: 'all' | 'dropone' | 'guest' = 'all',
+  ) {
+    const query = filter === 'all' ? '' : `?filter=${filter}`
+    return apiFetch<EspaceVisitorsPayload>(
+      `/espace/${encodeURIComponent(slug)}/visitors${query}`,
+      { token: token() },
+    )
+  }
+
   function checkoutSeats(slug: string, additionalSeats: number) {
     return apiFetch<{
       paidImmediately: boolean
@@ -312,6 +355,7 @@ export function useEspace() {
     payInvoice,
     confirmInvoicePayment,
     getMemberAnalytics,
+    getVisitors,
     checkoutSeats,
     confirmSeats,
     listMine,

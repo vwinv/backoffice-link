@@ -181,7 +181,19 @@
       "member": "Member",
       "role": "Role",
       "see": "View",
-      "seeStats": "View stats for {name}"
+      "seeStats": "View stats for {name}",
+      "visitors": "Visitors",
+      "visitorsLead": "People who viewed your team’s cards",
+      "visitorsUnique": "Unique",
+      "visitorsDropOne": "DropOne",
+      "visitorsGuest": "Guests",
+      "visitorsFilterAll": "All",
+      "visitorsFilterDropOne": "DropOne",
+      "visitorsFilterGuest": "Guests",
+      "visitorsEmpty": "No visitors yet.",
+      "visitorsLoadError": "Unable to load visitors",
+      "visitorsCardOf": "{name}’s card",
+      "visitorsLocked": "Visitor history requires a suitable plan."
     },
     "members": {
       "title": "Members",

@@ -26,8 +26,24 @@ export type AppClient = {
   ownedTeamsCount: number
 }
 
+export type ClientPointsLedgerItem = {
+  id: string
+  amountPoints: number
+  reason: string
+  productType: string | null
+  productRef: string | null
+  createdAt: string
+}
+
 export type AppClientDetail = AppClient & {
   stripeCustomerId: string | null
+  points: {
+    balancePoints: number
+    balanceFcfa: number
+    balanceTenths: number
+    updatedAt: string | null
+    ledger: ClientPointsLedgerItem[]
+  }
   cards: Array<{
     id: string
     slug: string

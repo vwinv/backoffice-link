@@ -114,6 +114,25 @@ function teamRoleLabel(role: string) {
   return map[role] || role
 }
 
+function pointsReasonLabel(reason: string) {
+  const map: Record<string, string> = {
+    REFERRAL_SUBSCRIBE: 'Parrainage (abonnement)',
+    CARD_VISIT: 'Visite carte',
+    PURCHASE: 'Achat Drop-Points',
+    ADJUSTMENT: 'Ajustement',
+  }
+  return map[reason] || reason
+}
+
+function formatPoints(value: number) {
+  if (Number.isInteger(value)) return String(value)
+  return value.toFixed(1).replace(/\.0$/, '')
+}
+
+function formatMoney(value: number, currency = 'FCFA') {
+  return `${new Intl.NumberFormat('fr-FR').format(Math.round(value))} ${currency}`
+}
+
 function flashSaved() {
   savedFlash.value = true
   setTimeout(() => {
@@ -259,6 +278,11 @@ await load()
           <span class="meta-label">Téléphone</span>
           <strong>{{ detail.phone || '-' }}</strong>
         </div>
+        <div class="meta-item meta-item--points">
+          <span class="meta-label">Drop-Points</span>
+          <strong>{{ formatPoints(detail.points?.balancePoints ?? 0) }} pts</strong>
+          <small>≈ {{ formatMoney(detail.points?.balanceFcfa ?? 0) }}</small>
+        </div>
         <div class="meta-item">
           <span class="meta-label">Cartes</span>
           <strong>{{ detail.stats.cardsCount }}</strong>
@@ -401,6 +425,55 @@ await load()
                 </button>
               </div>
             </article>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Drop-Points</h2>
+              <p class="panel-lead">Solde et mouvements de points.</p>
+            </div>
+          </div>
+
+          <div class="points-balance">
+            <div>
+              <span class="meta-label">Solde</span>
+              <strong>{{ formatPoints(detail.points?.balancePoints ?? 0) }} pts</strong>
+            </div>
+            <div>
+              <span class="meta-label">Équivalent</span>
+              <strong>{{ formatMoney(detail.points?.balanceFcfa ?? 0) }}</strong>
+            </div>
+          </div>
+
+          <div v-if="detail.points?.ledger?.length" class="list">
+            <p class="list-title">Historique</p>
+            <article
+              v-for="entry in detail.points.ledger"
+              :key="entry.id"
+              class="list-row"
+            >
+              <div>
+                <strong>{{ pointsReasonLabel(entry.reason) }}</strong>
+                <small>
+                  {{ formatShortDate(entry.createdAt) }}
+                  <template v-if="entry.productRef">
+                    · {{ entry.productRef }}
+                  </template>
+                </small>
+              </div>
+              <strong
+                class="points-delta"
+                :class="entry.amountPoints >= 0 ? 'is-credit' : 'is-debit'"
+              >
+                {{ entry.amountPoints > 0 ? '+' : '' }}{{ formatPoints(entry.amountPoints) }}
+              </strong>
+            </article>
+          </div>
+          <div v-else class="sub-empty">
+            <strong>Aucun mouvement</strong>
+            <p>Pas encore de crédit ou débit de points.</p>
           </div>
         </section>
 
@@ -682,6 +755,27 @@ h1 {
   font-size: 0.95rem;
   font-weight: 700;
 }
+.meta-item--points small {
+  color: var(--do-muted);
+  font-size: 0.78rem;
+}
+.points-balance {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #e8f0ff;
+}
+.points-balance .meta-label { color: #0a53c7; }
+.points-balance strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.05rem;
+  color: #0a53c7;
+}
+.points-delta.is-credit { color: #16a34a; }
+.points-delta.is-debit { color: #ef4444; }
 
 .layout {
   display: grid;

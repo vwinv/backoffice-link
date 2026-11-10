@@ -27,10 +27,14 @@ export type AdminSubscriptionItem = {
   cancelledAt: string | null
   purchasedSeats: number | null
   totalAmount: number | null
+  /** Montant réellement débité (facture / total période). */
+  chargedAmount: number | null
+  /** Points débités si paiement Drop-Points (1 pt = 10 FCFA). */
+  pointsSpent: number | null
   countsInRevenue: boolean
   createdAt: string
   updatedAt: string
-  paymentProvider: 'stripe' | 'paydunya' | null
+  paymentProvider: 'stripe' | 'paydunya' | 'points' | 'apple' | null
   user: {
     id: string
     email: string
