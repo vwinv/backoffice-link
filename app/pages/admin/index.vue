@@ -331,7 +331,9 @@ const topOffers = computed(() => stats.value?.revenue.byOffer.slice(0, 5) ?? [])
   display: flex;
   flex-direction: column;
   gap: 28px;
-  max-width: 1100px;
+  width: 100%;
+  max-width: none;
+  min-height: calc(100dvh - 64px);
 }
 
 .hero {
@@ -430,12 +432,14 @@ h1 {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
+  width: 100%;
 }
 
 .stat {
   position: relative;
   overflow: hidden;
-  padding: 20px 18px;
+  padding: 22px 20px;
+  min-height: 132px;
   border-radius: var(--do-radius);
   background: var(--do-surface);
   border: 1px solid var(--do-line);
@@ -546,6 +550,8 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%;
+  flex: 1;
 }
 
 .charts-split {
@@ -553,24 +559,27 @@ h1 {
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   align-items: stretch;
+  width: 100%;
 }
 
 .chart-panel {
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 22px;
   border-radius: var(--do-radius);
   background: var(--do-surface);
   border: 1.5px solid var(--do-line);
   box-shadow: var(--do-shadow);
+  width: 100%;
 }
 
 .chart-panel--equal {
-  min-height: 360px;
+  min-height: 420px;
 }
 
 .chart-panel--wide {
   width: 100%;
+  min-height: 380px;
 }
 
 .chart-head {
@@ -592,8 +601,9 @@ h1 {
 
 .panels {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
+  width: 100%;
 }
 
 .panel {
@@ -602,6 +612,7 @@ h1 {
   background: var(--do-surface);
   border: 1.5px solid var(--do-line);
   box-shadow: var(--do-shadow);
+  min-height: 100%;
 }
 
 .panel h2 {
@@ -641,6 +652,12 @@ h1 {
   margin: 0;
   font-weight: 800;
   color: var(--do-ink);
+}
+
+@media (max-width: 1280px) {
+  .panels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 960px) {
