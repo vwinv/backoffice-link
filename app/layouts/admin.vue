@@ -1,5 +1,31 @@
 <script setup lang="ts">
 const { user, displayName, logout, hasPermission, isSuperAdmin } = useAuth()
+
+/** Recharge le backoffice toutes les 30 min pour garder les données à jour. */
+const AUTO_RELOAD_MS = 30 * 60 * 1000
+let lastReloadAt = Date.now()
+let reloadTimer: ReturnType<typeof setInterval> | null = null
+
+function reloadIfDue() {
+  if (Date.now() - lastReloadAt < AUTO_RELOAD_MS) return
+  if (document.visibilityState !== 'visible') return
+  lastReloadAt = Date.now()
+  window.location.reload()
+}
+
+function onVisibilityChange() {
+  reloadIfDue()
+}
+
+onMounted(() => {
+  reloadTimer = setInterval(reloadIfDue, AUTO_RELOAD_MS)
+  document.addEventListener('visibilitychange', onVisibilityChange)
+})
+
+onUnmounted(() => {
+  if (reloadTimer) clearInterval(reloadTimer)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+})
 </script>
 
 <template>
