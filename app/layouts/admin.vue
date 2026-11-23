@@ -6,19 +6,26 @@ const AUTO_RELOAD_MS = 5 * 60 * 1000
 let lastReloadAt = Date.now()
 let reloadTimer: ReturnType<typeof setInterval> | null = null
 
-function reloadIfDue() {
-  if (Date.now() - lastReloadAt < AUTO_RELOAD_MS) return
-  if (document.visibilityState !== 'visible') return
+function doReload() {
   lastReloadAt = Date.now()
   window.location.reload()
 }
 
+/** Tick interval : le délai est déjà géré par setInterval. */
+function onTick() {
+  if (document.visibilityState !== 'visible') return
+  doReload()
+}
+
+/** Au retour sur l’onglet : recharge si ≥ 5 min se sont écoulées. */
 function onVisibilityChange() {
-  reloadIfDue()
+  if (document.visibilityState !== 'visible') return
+  if (Date.now() - lastReloadAt < AUTO_RELOAD_MS) return
+  doReload()
 }
 
 onMounted(() => {
-  reloadTimer = setInterval(reloadIfDue, AUTO_RELOAD_MS)
+  reloadTimer = setInterval(onTick, AUTO_RELOAD_MS)
   document.addEventListener('visibilitychange', onVisibilityChange)
 })
 

@@ -16,6 +16,23 @@ await useAsyncData('admin-dashboard', async () => {
   return true
 })
 
+/** Soft refresh des stats toutes les 5 min (sans recharger toute la page). */
+const STATS_POLL_MS = 5 * 60 * 1000
+let statsPollTimer: ReturnType<typeof setInterval> | null = null
+
+function pollStatsIfVisible() {
+  if (document.visibilityState !== 'visible') return
+  void fetchStats(true)
+}
+
+onMounted(() => {
+  statsPollTimer = setInterval(pollStatsIfVisible, STATS_POLL_MS)
+})
+
+onUnmounted(() => {
+  if (statsPollTimer) clearInterval(statsPollTimer)
+})
+
 function formatNumber(value: number | undefined) {
   if (value == null) return '-'
   return new Intl.NumberFormat('fr-FR').format(value)
