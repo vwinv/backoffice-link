@@ -1,8 +1,8 @@
 <script setup lang="ts">
 const { user, displayName, logout, hasPermission, isSuperAdmin } = useAuth()
 
-/** Recharge le backoffice toutes les 30 min pour garder les données à jour. */
-const AUTO_RELOAD_MS = 30 * 60 * 1000
+/** Recharge le backoffice toutes les 5 min pour garder les données à jour. */
+const AUTO_RELOAD_MS = 5 * 60 * 1000
 let lastReloadAt = Date.now()
 let reloadTimer: ReturnType<typeof setInterval> | null = null
 
