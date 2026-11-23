@@ -1,5 +1,12 @@
 export type NotificationAudience = 'ALL' | 'PREMIUM' | 'FREE' | 'USER_IDS'
-export type NotificationCampaignStatus = 'DRAFT' | 'SENDING' | 'SENT' | 'FAILED'
+export type NotificationCampaignStatus =
+  | 'DRAFT'
+  | 'SCHEDULED'
+  | 'SENDING'
+  | 'SENT'
+  | 'FAILED'
+  | 'CANCELLED'
+export type NotificationRecurrence = 'ONCE' | 'DAILY' | 'WEEKLY' | 'MONTHLY'
 
 export type NotificationCampaign = {
   id: string
@@ -15,6 +22,11 @@ export type NotificationCampaign = {
   readCount: number
   pushAttempted: number
   errorMessage: string | null
+  scheduledAt: string | null
+  recurrence: NotificationRecurrence
+  recurrenceEndsAt: string | null
+  maxOccurrences: number | null
+  occurrenceCount: number
   createdAt: string
   sentAt: string | null
   updatedAt: string
@@ -39,6 +51,7 @@ export type NotificationStats = {
   campaigns: number
   sent: number
   failed: number
+  scheduled?: number
   delivered: number
   unread: number
   pushTokens: number
@@ -51,6 +64,10 @@ export type CreateNotificationPayload = {
   bodyEn?: string
   audience: NotificationAudience
   userIds?: string[]
+  scheduledAt?: string
+  recurrence?: NotificationRecurrence
+  recurrenceEndsAt?: string
+  maxOccurrences?: number
 }
 
 export function useAdminNotifications() {
@@ -89,9 +106,17 @@ export function useAdminNotifications() {
     })
   }
 
+  async function cancelCampaign(id: string) {
+    return apiFetch<NotificationCampaign>(`/admin/notifications/${id}/cancel`, {
+      method: 'POST',
+      token: token.value,
+    })
+  }
+
   return {
     getStats,
     listCampaigns,
     sendCampaign,
+    cancelCampaign,
   }
 }

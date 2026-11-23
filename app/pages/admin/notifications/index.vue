@@ -2,6 +2,7 @@
 import type {
   NotificationAudience,
   NotificationCampaign,
+  NotificationRecurrence,
   NotificationStats,
 } from '~/composables/useAdminNotifications'
 import type { AppClient } from '~/composables/useAdminClients'
@@ -11,7 +12,12 @@ definePageMeta({
 })
 
 const { hasPermission } = useAuth()
-const { getStats, listCampaigns, sendCampaign } = useAdminNotifications()
+const {
+  getStats,
+  listCampaigns,
+  sendCampaign,
+  cancelCampaign,
+} = useAdminNotifications()
 const { listClients } = useAdminClients()
 
 const search = ref('')
@@ -25,6 +31,7 @@ const meta = ref({ total: 0, page: 1, limit: 20, totalPages: 1 })
 const loading = ref(false)
 const statsLoading = ref(true)
 const error = ref<string | null>(null)
+const cancellingId = ref<string | null>(null)
 
 const showCompose = ref(false)
 const sending = ref(false)
@@ -35,6 +42,11 @@ const form = reactive({
   titleEn: '',
   bodyEn: '',
   audience: 'ALL' as NotificationAudience,
+  sendMode: 'now' as 'now' | 'schedule',
+  scheduledAtLocal: '',
+  recurrence: 'ONCE' as NotificationRecurrence,
+  recurrenceEndsAtLocal: '',
+  maxOccurrences: '' as string,
 })
 
 const selectedClients = ref<AppClient[]>([])
@@ -101,12 +113,32 @@ function goToPage(next: number) {
   loadCampaigns()
 }
 
+function defaultScheduleLocal() {
+  const d = new Date(Date.now() + 60 * 60 * 1000)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+/** datetime-local (heure Dakar / locale navigateur) → ISO UTC. */
+function localInputToIso(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+  const date = new Date(trimmed)
+  if (Number.isNaN(date.getTime())) return undefined
+  return date.toISOString()
+}
+
 function openCompose() {
   form.title = ''
   form.body = ''
   form.titleEn = ''
   form.bodyEn = ''
   form.audience = 'ALL'
+  form.sendMode = 'now'
+  form.scheduledAtLocal = defaultScheduleLocal()
+  form.recurrence = 'ONCE'
+  form.recurrenceEndsAtLocal = ''
+  form.maxOccurrences = ''
   formError.value = null
   selectedClients.value = []
   clientSearch.value = ''
@@ -183,18 +215,32 @@ function audienceLabel(value: string) {
 function statusLabel(value: string) {
   const map: Record<string, string> = {
     DRAFT: 'Brouillon',
+    SCHEDULED: 'Programmée',
     SENDING: 'Envoi…',
     SENT: 'Envoyée',
     FAILED: 'Échec',
+    CANCELLED: 'Annulée',
   }
   return map[value] || value
 }
 
 function statusClass(value: string) {
   if (value === 'SENT') return 'badge-ok'
+  if (value === 'SCHEDULED') return 'badge-trial'
   if (value === 'SENDING') return 'badge-trial'
   if (value === 'FAILED') return 'badge-danger'
+  if (value === 'CANCELLED') return 'badge-off'
   return 'badge-off'
+}
+
+function recurrenceLabel(value: string) {
+  const map: Record<string, string> = {
+    ONCE: 'Une fois',
+    DAILY: 'Tous les jours',
+    WEEKLY: 'Toutes les semaines',
+    MONTHLY: 'Tous les mois',
+  }
+  return map[value] || value
 }
 
 const audienceOptions: Array<{
@@ -217,10 +263,19 @@ const englishPairOk = computed(() => {
   return titleEn.length >= 2 && bodyEn.length >= 2
 })
 
+const scheduleValid = computed(() => {
+  if (form.sendMode !== 'schedule') return true
+  if (!form.scheduledAtLocal.trim()) return false
+  const when = new Date(form.scheduledAtLocal)
+  if (Number.isNaN(when.getTime())) return false
+  return when.getTime() > Date.now() - 60_000
+})
+
 const canSend = computed(() =>
   form.title.trim().length >= 2
   && form.body.trim().length >= 2
   && englishPairOk.value
+  && scheduleValid.value
   && (form.audience !== 'USER_IDS' || selectedClients.value.length > 0)
   && !sending.value,
 )
@@ -230,6 +285,7 @@ const overviewCards = computed(() => {
   if (!s) return []
   return [
     { label: 'Campagnes', value: formatNumber(s.campaigns), hint: `${s.sent} envoyées` },
+    { label: 'Programmées', value: formatNumber(s.scheduled ?? 0), hint: 'En attente d’envoi' },
     { label: 'Livrées (inbox)', value: formatNumber(s.delivered), hint: `${s.unread} non lues` },
     { label: 'Échecs', value: formatNumber(s.failed), hint: 'Campagnes en erreur' },
     { label: 'Tokens push', value: formatNumber(s.pushTokens), hint: 'Appareils enregistrés' },
@@ -246,8 +302,18 @@ async function onSend() {
     formError.value = 'Pour l’anglais, renseignez le titre et le message ensemble'
     return
   }
+  if (form.sendMode === 'schedule' && !scheduleValid.value) {
+    formError.value = 'Choisissez une date et une heure futures'
+    return
+  }
   sending.value = true
   try {
+    const scheduledAt = form.sendMode === 'schedule'
+      ? localInputToIso(form.scheduledAtLocal)
+      : undefined
+    const maxOccurrences = form.maxOccurrences.trim()
+      ? Number(form.maxOccurrences)
+      : undefined
     await sendCampaign({
       title: form.title.trim(),
       body: form.body.trim(),
@@ -256,6 +322,17 @@ async function onSend() {
       audience: form.audience,
       userIds: form.audience === 'USER_IDS'
         ? selectedClients.value.map(c => c.id)
+        : undefined,
+      scheduledAt,
+      recurrence: form.sendMode === 'schedule' ? form.recurrence : 'ONCE',
+      recurrenceEndsAt: form.sendMode === 'schedule' && form.recurrence !== 'ONCE'
+        ? localInputToIso(form.recurrenceEndsAtLocal)
+        : undefined,
+      maxOccurrences: form.sendMode === 'schedule'
+        && form.recurrence !== 'ONCE'
+        && maxOccurrences
+        && Number.isFinite(maxOccurrences)
+        ? maxOccurrences
         : undefined,
     })
     showCompose.value = false
@@ -266,6 +343,24 @@ async function onSend() {
   }
   finally {
     sending.value = false
+  }
+}
+
+async function onCancel(campaign: NotificationCampaign) {
+  if (campaign.status !== 'SCHEDULED') return
+  if (!confirm(`Annuler la campagne « ${campaign.title} » ?`)) return
+  cancellingId.value = campaign.id
+  try {
+    await cancelCampaign(campaign.id)
+    await Promise.all([loadStats(), loadCampaigns()])
+  }
+  catch (err: unknown) {
+    error.value = err instanceof ApiError
+      ? err.message
+      : 'Impossible d’annuler la campagne'
+  }
+  finally {
+    cancellingId.value = null
   }
 }
 
@@ -315,9 +410,11 @@ await Promise.all([loadStats(), loadCampaigns()])
       >
       <select v-model="status" @change="onFilterChange">
         <option value="">Tous les statuts</option>
+        <option value="SCHEDULED">Programmées</option>
         <option value="SENT">Envoyées</option>
         <option value="FAILED">Échecs</option>
         <option value="SENDING">En cours</option>
+        <option value="CANCELLED">Annulées</option>
       </select>
     </div>
 
@@ -328,18 +425,20 @@ await Promise.all([loadStats(), loadCampaigns()])
             <th>Campagne</th>
             <th>Audience</th>
             <th>Statut</th>
+            <th>Programmation</th>
             <th>Cibles</th>
             <th>Livrées</th>
             <th>Lues</th>
             <th>Envoyée</th>
+            <th />
           </tr>
         </thead>
         <tbody>
           <tr v-if="loading && campaigns.length === 0">
-            <td colspan="7" class="empty">Chargement…</td>
+            <td colspan="9" class="empty">Chargement…</td>
           </tr>
           <tr v-else-if="campaigns.length === 0">
-            <td colspan="7" class="empty">Aucune campagne pour le moment.</td>
+            <td colspan="9" class="empty">Aucune campagne pour le moment.</td>
           </tr>
           <tr v-for="item in campaigns" :key="item.id">
             <td>
@@ -353,6 +452,20 @@ await Promise.all([loadStats(), loadCampaigns()])
                 {{ statusLabel(item.status) }}
               </span>
             </td>
+            <td>
+              <template v-if="item.scheduledAt">
+                {{ formatDate(item.scheduledAt) }}
+                <small class="push-meta">
+                  {{ recurrenceLabel(item.recurrence) }}
+                  <template v-if="item.occurrenceCount > 0">
+                    · {{ item.occurrenceCount }} envoi(s)
+                  </template>
+                </small>
+              </template>
+              <template v-else>
+                Immédiat
+              </template>
+            </td>
             <td>{{ formatNumber(item.targetCount) }}</td>
             <td>
               {{ formatNumber(item.deliveredCount) }}
@@ -362,6 +475,17 @@ await Promise.all([loadStats(), loadCampaigns()])
             </td>
             <td>{{ formatNumber(item.readCount) }}</td>
             <td>{{ formatDate(item.sentAt || item.createdAt) }}</td>
+            <td>
+              <button
+                v-if="item.status === 'SCHEDULED' && hasPermission('notifications.send')"
+                type="button"
+                class="ghost-sm"
+                :disabled="cancellingId === item.id"
+                @click="onCancel(item)"
+              >
+                {{ cancellingId === item.id ? '…' : 'Annuler' }}
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -558,6 +682,74 @@ await Promise.all([loadStats(), loadCampaigns()])
                     Ajoutez au moins un client.
                   </p>
                 </div>
+
+                <div class="field">
+                  <span class="field-label">Envoi</span>
+                  <div class="audience-grid schedule-mode" role="radiogroup" aria-label="Mode d’envoi">
+                    <button
+                      type="button"
+                      class="audience-card"
+                      :class="{ active: form.sendMode === 'now' }"
+                      :aria-pressed="form.sendMode === 'now'"
+                      @click="form.sendMode = 'now'"
+                    >
+                      <strong>Maintenant</strong>
+                      <small>Envoi immédiat</small>
+                    </button>
+                    <button
+                      type="button"
+                      class="audience-card"
+                      :class="{ active: form.sendMode === 'schedule' }"
+                      :aria-pressed="form.sendMode === 'schedule'"
+                      @click="form.sendMode = 'schedule'"
+                    >
+                      <strong>Programmer</strong>
+                      <small>Date et heure</small>
+                    </button>
+                  </div>
+                </div>
+
+                <div v-if="form.sendMode === 'schedule'" class="schedule-box">
+                  <label class="field">
+                    <span class="field-label">Date et heure</span>
+                    <input
+                      v-model="form.scheduledAtLocal"
+                      type="datetime-local"
+                      required
+                    >
+                  </label>
+                  <label class="field">
+                    <span class="field-label">Occurrence</span>
+                    <select v-model="form.recurrence">
+                      <option value="ONCE">Une fois</option>
+                      <option value="DAILY">Tous les jours</option>
+                      <option value="WEEKLY">Toutes les semaines</option>
+                      <option value="MONTHLY">Tous les mois</option>
+                    </select>
+                  </label>
+                  <template v-if="form.recurrence !== 'ONCE'">
+                    <label class="field">
+                      <span class="field-label">Fin (optionnel)</span>
+                      <input
+                        v-model="form.recurrenceEndsAtLocal"
+                        type="datetime-local"
+                      >
+                    </label>
+                    <label class="field">
+                      <span class="field-label">Nombre max d’envois (optionnel)</span>
+                      <input
+                        v-model="form.maxOccurrences"
+                        type="number"
+                        min="1"
+                        max="365"
+                        placeholder="Illimité"
+                      >
+                    </label>
+                  </template>
+                  <p class="hint">
+                    Heure locale de votre navigateur. Les envois récurrents continuent jusqu’à la fin ou au nombre max.
+                  </p>
+                </div>
               </div>
 
               <aside class="compose-preview">
@@ -596,7 +788,11 @@ await Promise.all([loadStats(), loadCampaigns()])
                 class="primary"
                 :disabled="!canSend"
               >
-                {{ sending ? 'Envoi…' : 'Envoyer' }}
+                {{
+                  sending
+                    ? (form.sendMode === 'schedule' ? 'Programmation…' : 'Envoi…')
+                    : (form.sendMode === 'schedule' ? 'Programmer' : 'Envoyer')
+                }}
               </button>
             </footer>
           </form>
@@ -792,6 +988,18 @@ td strong { display: block; }
 }
 .hint { margin: 0; color: var(--do-muted); font-size: 0.82rem; line-height: 1.4; }
 .muted { color: var(--do-muted); font-size: 0.85rem; }
+.schedule-mode { grid-template-columns: 1fr 1fr; }
+.schedule-box {
+  display: grid; gap: 12px; padding: 14px; border-radius: 14px;
+  border: 1px solid var(--do-line); background: rgba(10, 107, 255, 0.04);
+}
+.ghost-sm {
+  border: 1px solid var(--do-line); background: #fff; color: var(--do-text);
+  border-radius: 10px; padding: 6px 10px; font-size: 0.8rem; font-weight: 600;
+  cursor: pointer;
+}
+.ghost-sm:hover:not(:disabled) { border-color: var(--do-blue); color: var(--do-blue); }
+.ghost-sm:disabled { opacity: 0.55; cursor: not-allowed; }
 .modal-actions {
   display: flex; justify-content: flex-end; gap: 10px;
   padding: 14px 20px 18px; border-top: 1px solid var(--do-line);
